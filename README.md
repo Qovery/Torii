@@ -203,3 +203,23 @@ Today you have the choice between two options to build your Internal Developer P
 2. Easy: Use a convenient but proprietary SaaS solution like Port, Cortex, OpsLevel, etc.
 
 **We want to bring a third option** that takes the best of both worlds: an open-source solution that is easy to use and easy to extend.
+
+## FAQ
+
+### What's the difference between Qovery Portal and Qovery (Platform)?
+
+Qovery is an Internal Developer **Platform** focusing on the Software Development Lifecycle (build, deploy, run).
+Qovery Portal is an Internal Developer **Portal** focusing on unifying the experience of all engineering tools.
+
+Here is a features table to help you understand the difference:
+
+| Feature               | Qovery (Platform)                    | Qovery Portal |
+|-----------------------|--------------------------------------|---------------|
+| Build                 | ✅                                    | ❌             |
+| Deploy                | ✅                                    | ❌             |
+| Run                   | ✅                                    | ❌             |
+| Ephemeral Environment | ✅                                    | ❌             |
+| Self-Service          | ✅                                    | ✅             |
+| Catalog Service       | ❌                                    | ✅             |
+| Scorecard Service     | ❌                                    | ✅             |
+| Workflow Service      | Partial with the concept of Pipeline | ✅             |
