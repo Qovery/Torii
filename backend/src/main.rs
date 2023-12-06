@@ -2,11 +2,10 @@ use std::env;
 use std::fs::File;
 use std::sync::Arc;
 
-use axum::{Extension, middleware, Router};
-use axum::http::{Extensions, StatusCode, Uri};
-use axum::routing::get;
+use axum::{Extension, Router};
+use axum::http::{StatusCode, Uri};
+use axum::routing::{get, post};
 use clap::Parser;
-use serde::{Deserialize, Serialize};
 use tracing::error;
 use tracing::log::warn;
 use tracing_subscriber::layer::SubscriberExt;
@@ -61,7 +60,7 @@ async fn main() {
         .route("/", get(|| async { "OK" }))
         .route("/healthz", get(|| async { "OK" }))
         .route("/catalogs/:slug/services", get(catalog::list_catalog_services))
-        .route("/catalogs/:slug/services/:slug/validate", get(catalog::exec_catalog_service_validate_scripts))
+        .route("/catalogs/:slug/services/:slug/validate", post(catalog::exec_catalog_service_validate_scripts))
         .layer(Extension(yaml_config));
     //.route("/catalog/:id", get(catalog::get_catalog_by_id))
     //.route("/catalog", post(catalog::create_catalog));

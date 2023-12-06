@@ -7,22 +7,24 @@ pub struct YamlConfig {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct CatalogYamlConfig {
-    pub name: String,
     pub slug: String,
+    pub name: String,
     pub description: Option<String>,
     pub services: Option<Vec<CatalogServiceYamlConfig>>,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct CatalogServiceYamlConfig {
-    pub name: String,
     pub slug: String,
+    pub name: String,
     pub description: Option<String>,
     pub fields: Option<Vec<CatalogFieldYamlConfig>>,
+    pub validate_scripts: Option<Vec<String>>,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct CatalogFieldYamlConfig {
+    pub slug: String,
     pub title: String,
     pub description: Option<String>,
     pub placeholder: Option<String>,
@@ -59,5 +61,9 @@ impl CatalogFieldYamlConfig {
             "object" => CatalogFieldType::Object,
             _ => panic!("Unknown field type: {}", self.type_),
         }
+    }
+
+    pub fn is_required(&self) -> bool {
+        self.required.unwrap_or(false)
     }
 }

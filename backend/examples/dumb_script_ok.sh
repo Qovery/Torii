@@ -9,6 +9,10 @@ echo "This is a superrrrr powerful script!!!! It does nothing but print this mes
 
 echo "The arguments passed to this script are: $@"
 
+echo "Sleeping for 5 seconds..."
+
+sleep 5
+
 echo "The environment variables set for this script are:"
 env
 
