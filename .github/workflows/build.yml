@@ -1,0 +1,45 @@
+name: Build portal
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        rust-toolchain: [stable]
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust-toolchain }}
+          components: rustfmt
+          override: true
+
+      - name: Install Build Essentials
+        run: sudo apt-get install build-essential mingw-w64 gcc
+
+      - name: Verify versions
+        run: rustc --version && rustup --version && cargo --version
+
+      - name: Cache build artifacts
+        id: cache-cargo
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ matrix.rust-toolchain }}
+
+      - name: Build Portal
+        run: cargo build --release --all-features
