@@ -1,0 +1,9 @@
+# Ignore all file by default (allow list mode)
+**
+
+# Dependencies
+!Cargo.toml
+!Cargo.lock
+
+# Sources
+!src
