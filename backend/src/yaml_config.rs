@@ -2,12 +2,21 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct YamlConfig {
-    pub catalog: Vec<CatalogYamlConfig>,
+    pub catalogs: Vec<CatalogYamlConfig>,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct CatalogYamlConfig {
     pub name: String,
+    pub slug: String,
+    pub description: Option<String>,
+    pub services: Option<Vec<CatalogServiceYamlConfig>>,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+pub struct CatalogServiceYamlConfig {
+    pub name: String,
+    pub slug: String,
     pub description: Option<String>,
     pub fields: Option<Vec<CatalogFieldYamlConfig>>,
 }

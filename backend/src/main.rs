@@ -60,7 +60,8 @@ async fn main() {
         .fallback(unknown_route)
         .route("/", get(|| async { "OK" }))
         .route("/healthz", get(|| async { "OK" }))
-        .route("/catalog", get(catalog::list_catalogs))
+        .route("/catalogs/:slug/services", get(catalog::list_catalog_services))
+        .route("/catalogs/:slug/services/:slug/validate", get(catalog::exec_catalog_service_validate_scripts))
         .layer(Extension(yaml_config));
     //.route("/catalog/:id", get(catalog::get_catalog_by_id))
     //.route("/catalog", post(catalog::create_catalog));
