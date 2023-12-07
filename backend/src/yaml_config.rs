@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
@@ -19,7 +21,20 @@ pub struct CatalogServiceYamlConfig {
     pub name: String,
     pub description: Option<String>,
     pub fields: Option<Vec<CatalogFieldYamlConfig>>,
-    pub validate_scripts: Option<Vec<String>>,
+    pub validate: Option<Vec<CatalogServiceValidateYamlConfig>>,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+pub struct CatalogServiceValidateYamlConfig {
+    pub command: Vec<String>,
+    pub timeout: Option<u16>,
+}
+
+impl Display for CatalogServiceValidateYamlConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let command = self.command.join(" ");
+        write!(f, "{}", command)
+    }
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]

@@ -6,7 +6,7 @@ use axum::{Extension, Router};
 use axum::http::{StatusCode, Uri};
 use axum::routing::{get, post};
 use clap::Parser;
-use tracing::error;
+use tracing::{error, info};
 use tracing::log::warn;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -29,9 +29,6 @@ pub async fn unknown_route(uri: Uri) -> (StatusCode, String) {
 
 #[tokio::main]
 async fn main() {
-    println!("{} {}", constants::PROGRAM_NAME, constants::PROGRAM_VERSION);
-    println!("{}", constants::BANNER);
-
     // initialize tracing
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
@@ -41,6 +38,9 @@ async fn main() {
         .init();
 
     let args = CLI::parse();
+
+    println!("{} {}", constants::PROGRAM_NAME, constants::PROGRAM_VERSION);
+    println!("{}", constants::BANNER);
 
     let file = File::open(args.config).unwrap_or_else(|err| {
         error!("failed to open config file: {}", err);
@@ -65,6 +65,9 @@ async fn main() {
     //.route("/catalog/:id", get(catalog::get_catalog_by_id))
     //.route("/catalog", post(catalog::create_catalog));
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:9999").await.unwrap();
+    let addr = "0.0.0.0:9999";
+    info!("Server listening on {}", addr);
+
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }

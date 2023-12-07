@@ -8,28 +8,42 @@ catalogs:
         description: spin up a testing environment
         icon: https://example.com/icon.png
         fields:
-          - title: environment name
+          - slug: environment-name
+            title: environment name
             description: provide a name for your environment
             placeholder: testing-123
             type: string
             default: testing-123
             required: true
             autocomplete-fetcher: ./your-script.py
-        validation:
-          - validation-script-1.sh # executed first
-          - validation-script-2.sh # AND then this one
+        validate:
+          - command:
+              - bash
+              - validation-script-1.sh # executed first
+            timeout: 60 # timeout in seconds
+          - command:
+              - bash
+              - validation-script-2.sh # AND then this one
         post-validation:
-          - script: post-validation-script-1.sh # executed first
+          - command:
+              - bash
+              - post-validation-script-1.sh # executed first
+            timeout: 60 # timeout in seconds
             model: string (optional) # model name
-          - script: post-validation-script-2.sh # AND then this one
+          - command:
+              - bash
+              - post-validation-script-2.sh # AND then this one
             model: string (optional) # model name
-          - script: post-validation-script-3.sh # AND finally this one
+          - command:
+              - bash
+              - post-validation-script-3.sh # AND finally this one
             model: string (optional) # model name
 models:
   - name: string
     description: string (optional)
     fields:
-      - title: string
+      - slug: string
+        title: string
         type: string|integer|float|boolean|list
         default: string (optional)
         required: boolean

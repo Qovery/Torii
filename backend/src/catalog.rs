@@ -69,21 +69,34 @@ pub async fn exec_catalog_service_validate_scripts(
         }))
     };
 
-    for validate_script in service.validate_scripts.as_ref().unwrap() {
+    for v in service.validate.as_ref().unwrap_or(&vec![]) {
         let json_payload = serde_json::to_string(&req.payload).unwrap();
 
-        debug!("executing validate script '{}' with payload '{}'", validate_script, json_payload);
+        let cmd_one_line = v.command.join(" ");
 
-        let output = process::Command::new("python3")
-            .arg(validate_script)
-            .arg(json_payload)
+        debug!("executing validate script '{}' with payload '{}'", &cmd_one_line, json_payload);
+
+        if v.command.len() == 1 {
+            return (StatusCode::BAD_REQUEST, Json(SimpleResponse {
+                message: Some(format!("Validate script '{}' is invalid. \
+                Be explicit on the command to execute, e.g. 'python3 examples/validation_script.py'", v))
+            }));
+        }
+
+        let mut cmd = process::Command::new(&v.command[0]);
+
+        for arg in v.command[1..].iter() {
+            cmd.arg(arg);
+        }
+
+        let output = cmd.arg(json_payload)
             .output()
             .await
             .unwrap();
 
         if !output.status.success() {
             return (StatusCode::BAD_REQUEST, Json(SimpleResponse {
-                message: Some(format!("Validate script '{}' failed: {:?}", validate_script, String::from_utf8(output.stderr).unwrap_or("<no error output>".to_string())))
+                message: Some(format!("Validate script '{}' failed: {:?}", &cmd_one_line, String::from_utf8(output.stderr).unwrap_or("<no error output>".to_string())))
             }));
         }
     }
@@ -100,7 +113,7 @@ mod tests {
     use axum::http::StatusCode;
 
     use crate::catalog::{exec_catalog_service_validate_scripts, ExecValidateScriptRequest, find_catalog_by_slug, find_catalog_service_by_slug};
-    use crate::yaml_config::{CatalogFieldYamlConfig, CatalogServiceYamlConfig, CatalogYamlConfig, YamlConfig};
+    use crate::yaml_config::{CatalogFieldYamlConfig, CatalogServiceValidateYamlConfig, CatalogServiceYamlConfig, CatalogYamlConfig, YamlConfig};
 
     #[test]
     fn test_find_catalog_by_slug() {
@@ -136,14 +149,14 @@ mod tests {
                     name: "Service 1".to_string(),
                     description: None,
                     fields: None,
-                    validate_scripts: None,
+                    validate: None,
                 },
                 CatalogServiceYamlConfig {
                     slug: "service-2".to_string(),
                     name: "Service 2".to_string(),
                     description: None,
                     fields: None,
-                    validate_scripts: None,
+                    validate: None,
                 },
             ]),
         };
@@ -187,8 +200,14 @@ mod tests {
                                     autocomplete_fetcher: None,
                                 },
                             ]),
-                            validate_scripts: Some(vec![
-                                "./examples/validation_script_ok.py".to_string(),
+                            validate: Some(vec![
+                                CatalogServiceValidateYamlConfig {
+                                    timeout: None,
+                                    command: vec![
+                                        "python3".to_string(),
+                                        "examples/validation_script_ok.py".to_string(),
+                                    ],
+                                },
                             ]),
                         },
                     ]),
