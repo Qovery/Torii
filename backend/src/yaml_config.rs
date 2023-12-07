@@ -27,7 +27,7 @@ pub struct CatalogServiceYamlConfig {
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct CatalogServiceValidateYamlConfig {
     pub command: Vec<String>,
-    pub timeout: Option<u16>,
+    pub timeout: Option<u64>,
 }
 
 impl Display for CatalogServiceValidateYamlConfig {

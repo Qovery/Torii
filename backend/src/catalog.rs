@@ -1,12 +1,15 @@
 use std::sync::Arc;
+use std::time::Duration;
 
 use axum::{debug_handler, Extension, Json};
 use axum::extract::Path;
 use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
 use tokio::process;
+use tokio::time::timeout;
 use tracing::debug;
 
+use crate::constants::DEFAULT_TIMEOUT_IN_SECONDS;
 use crate::yaml_config::{CatalogServiceYamlConfig, CatalogYamlConfig, YamlConfig};
 
 #[derive(Serialize, Deserialize)]
@@ -89,10 +92,12 @@ pub async fn exec_catalog_service_validate_scripts(
             cmd.arg(arg);
         }
 
-        let output = cmd.arg(json_payload)
-            .output()
-            .await
-            .unwrap();
+        let output = match timeout(Duration::from_secs(v.timeout.unwrap_or(DEFAULT_TIMEOUT_IN_SECONDS)), cmd.arg(json_payload).output()).await {
+            Ok(output) => output,
+            Err(_) => return (StatusCode::BAD_REQUEST, Json(SimpleResponse {
+                message: Some(format!("Validate script '{}' timed out after {} seconds", &cmd_one_line, v.timeout.unwrap_or(DEFAULT_TIMEOUT_IN_SECONDS)))
+            }))
+        }.unwrap();
 
         if !output.status.success() {
             return (StatusCode::BAD_REQUEST, Json(SimpleResponse {
