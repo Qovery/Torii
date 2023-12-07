@@ -5,6 +5,7 @@ use axum::extract::Path;
 use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
 use tokio::process;
+use tracing::debug;
 
 use crate::yaml_config::{CatalogServiceYamlConfig, CatalogYamlConfig, YamlConfig};
 
@@ -69,16 +70,20 @@ pub async fn exec_catalog_service_validate_scripts(
     };
 
     for validate_script in service.validate_scripts.as_ref().unwrap() {
-        let output = process::Command::new("sh")
-            .arg("-c")
+        let json_payload = serde_json::to_string(&req.payload).unwrap();
+
+        debug!("executing validate script '{}' with payload '{}'", validate_script, json_payload);
+
+        let output = process::Command::new("python3")
             .arg(validate_script)
+            .arg(json_payload)
             .output()
             .await
             .unwrap();
 
         if !output.status.success() {
             return (StatusCode::BAD_REQUEST, Json(SimpleResponse {
-                message: Some(format!("Validate script '{}' failed", validate_script))
+                message: Some(format!("Validate script '{}' failed: {:?}", validate_script, String::from_utf8(output.stderr).unwrap_or("<no error output>".to_string())))
             }));
         }
     }
