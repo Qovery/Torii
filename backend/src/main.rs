@@ -27,7 +27,7 @@ pub async fn unknown_route(uri: Uri) -> (StatusCode, String) {
     (StatusCode::NOT_FOUND, message)
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread")]
 async fn main() {
     // initialize tracing
     tracing_subscriber::registry()
@@ -54,6 +54,8 @@ async fn main() {
             std::process::exit(1);
         }
     };
+
+    // TODO check yaml_config validity - slug, name, description, services, fields, validate
 
     let app = Router::new()
         .fallback(unknown_route)

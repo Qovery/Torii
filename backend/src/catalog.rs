@@ -92,16 +92,38 @@ pub async fn exec_catalog_service_validate_scripts(
             cmd.arg(arg);
         }
 
-        let output = match timeout(Duration::from_secs(v.timeout.unwrap_or(DEFAULT_TIMEOUT_IN_SECONDS)), cmd.arg(json_payload).output()).await {
-            Ok(output) => output,
-            Err(_) => return (StatusCode::BAD_REQUEST, Json(SimpleResponse {
-                message: Some(format!("Validate script '{}' timed out after {} seconds", &cmd_one_line, v.timeout.unwrap_or(DEFAULT_TIMEOUT_IN_SECONDS)))
+        let mut child = match cmd.arg(json_payload).spawn() {
+            Ok(child) => child,
+            Err(err) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(SimpleResponse {
+                message: Some(format!("Validate script '{}' failed: {}", &cmd_one_line, err))
+            }))
+        };
+
+        let exit_status = match timeout(Duration::from_secs(v.timeout.unwrap_or(DEFAULT_TIMEOUT_IN_SECONDS)), child.wait()).await {
+            Ok(exit_status) => exit_status,
+            Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(SimpleResponse {
+                message: Some(match child.kill().await {
+                    Ok(_) => format!(
+                        "Validate script '{}' timed out after {} seconds",
+                        &cmd_one_line,
+                        v.timeout.unwrap_or(DEFAULT_TIMEOUT_IN_SECONDS)
+                    ),
+                    Err(err) => format!(
+                        "Validate script '{}' timed out after {} seconds, but failed to kill the process: {}",
+                        &cmd_one_line, v.timeout.unwrap_or(DEFAULT_TIMEOUT_IN_SECONDS), err
+                    )
+                })
             }))
         }.unwrap();
 
-        if !output.status.success() {
+        if !exit_status.success() {
             return (StatusCode::BAD_REQUEST, Json(SimpleResponse {
-                message: Some(format!("Validate script '{}' failed: {:?}", &cmd_one_line, String::from_utf8(output.stderr).unwrap_or("<no error output>".to_string())))
+                message: Some(
+                    format!("Validate script '{}' failed: {:?}",
+                            &cmd_one_line,
+                            exit_status
+                    )
+                )
             }));
         }
     }
@@ -222,7 +244,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_exec_catalog_service_validate_scripts() {
+    async fn test_exec_catalog_service_validate_scripts_ok() {
         let yaml_config = Arc::from(get_yaml_config());
 
         let x = exec_catalog_service_validate_scripts(
@@ -238,5 +260,62 @@ mod tests {
 
         assert_eq!(x.0, StatusCode::OK);
         assert_eq!(x.1.message, None);
+    }
+
+    #[tokio::test]
+    async fn test_exec_catalog_service_validate_scripts_ko() {
+        let mut yaml_config = get_yaml_config();
+
+        // add a failing validation script
+        yaml_config.catalogs[0].services.as_mut().unwrap()[0].validate.as_mut().unwrap().push(CatalogServiceValidateYamlConfig {
+            timeout: None,
+            command: vec![
+                "python3".to_string(),
+                "examples/validation_script_ko.py".to_string(),
+            ],
+        });
+
+        let x = exec_catalog_service_validate_scripts(
+            Extension(Arc::from(yaml_config)),
+            Path(("catalog-1".to_string(), "service-1".to_string())),
+            Json(ExecValidateScriptRequest {
+                payload: serde_json::json!({
+                "field-1": "value-1",
+                "field-2": "value-2",
+            })
+            }),
+        ).await;
+
+        assert_eq!(x.0, StatusCode::BAD_REQUEST);
+        assert_eq!(x.1.message.as_ref().unwrap().is_empty(), false);
+    }
+
+    #[tokio::test]
+    async fn test_exec_catalog_service_validate_scripts_timeout() {
+        // FIXME this test does not work because of tokio::test which is single threaded and does not allow to kill the child process
+        // let mut yaml_config = get_yaml_config();
+        //
+        // // add a failing validation script
+        // yaml_config.catalogs[0].services.as_mut().unwrap()[0].validate.as_mut().unwrap().push(CatalogServiceValidateYamlConfig {
+        //     timeout: Some(1), // 1 second
+        //     command: vec![
+        //         "python3".to_string(),
+        //         "examples/validation_script_ok.py".to_string(), // this is > 1 second
+        //     ],
+        // });
+        //
+        // let x = exec_catalog_service_validate_scripts(
+        //     Extension(Arc::from(yaml_config)),
+        //     Path(("catalog-1".to_string(), "service-1".to_string())),
+        //     Json(ExecValidateScriptRequest {
+        //         payload: serde_json::json!({
+        //         "field-1": "value-1",
+        //         "field-2": "value-2",
+        //     })
+        //     }),
+        // ).await;
+        //
+        // assert_eq!(x.0, StatusCode::INTERNAL_SERVER_ERROR);
+        // assert_eq!(x.1.message.as_ref().unwrap().is_empty(), false);
     }
 }

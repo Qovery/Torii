@@ -6,10 +6,9 @@ if __name__ == '__main__':
     arg_json = sys.argv[1]
 
     json.loads(arg_json)
-
     # wait for 5 seconds
     for i in range(5):
         print('Validation script waiting...')
         sleep(1)
 
-    print('OK')
+    exit(1)
