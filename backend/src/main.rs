@@ -61,6 +61,7 @@ async fn main() {
         .fallback(unknown_route)
         .route("/", get(|| async { "OK" }))
         .route("/healthz", get(|| async { "OK" }))
+        .route("/catalogs", get(catalog::list_catalogs))
         .route("/catalogs/:slug/services", get(catalog::list_catalog_services))
         .route("/catalogs/:slug/services/:slug/validate", post(catalog::exec_catalog_service_validate_scripts))
         .route("/catalogs/:slug/services/:slug/execute", post(catalog::exec_catalog_service_post_validate_scripts))

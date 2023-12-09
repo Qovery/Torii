@@ -68,6 +68,13 @@ fn consume_job_output_result_from_json_output_env(service_slug: &str) -> JobOutp
 }
 
 #[debug_handler]
+pub async fn list_catalogs(
+    Extension(yaml_config): Extension<Arc<YamlConfig>>,
+) -> (StatusCode, Json<ResultsResponse<CatalogYamlConfig>>) {
+    (StatusCode::OK, Json(ResultsResponse { message: None, results: yaml_config.catalogs.clone() }))
+}
+
+#[debug_handler]
 pub async fn list_catalog_services(
     Extension(yaml_config): Extension<Arc<YamlConfig>>,
     Path(catalog_slug): Path<String>,
