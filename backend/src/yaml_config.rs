@@ -2,6 +2,8 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
+use crate::constants::DEFAULT_TIMEOUT_IN_SECONDS;
+
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct YamlConfig {
     pub catalogs: Vec<CatalogYamlConfig>,
@@ -25,10 +27,32 @@ pub struct CatalogServiceYamlConfig {
     pub post_validate: Option<Vec<CatalogServicePostValidateYamlConfig>>,
 }
 
+pub trait ExternalCommand {
+    fn get_command(&self) -> &Vec<String>;
+    fn get_timeout(&self) -> u64;
+}
+
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct CatalogServiceValidateYamlConfig {
     pub command: Vec<String>,
     pub timeout: Option<u64>,
+}
+
+impl ExternalCommand for CatalogServiceValidateYamlConfig {
+    fn get_command(&self) -> &Vec<String> {
+        &self.command
+    }
+
+    fn get_timeout(&self) -> u64 {
+        self.timeout.unwrap_or(DEFAULT_TIMEOUT_IN_SECONDS)
+    }
+}
+
+impl Display for CatalogServiceValidateYamlConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let command = self.command.join(" ");
+        write!(f, "{}", command)
+    }
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
@@ -38,10 +62,13 @@ pub struct CatalogServicePostValidateYamlConfig {
     pub output_model: Option<String>,
 }
 
-impl Display for CatalogServiceValidateYamlConfig {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let command = self.command.join(" ");
-        write!(f, "{}", command)
+impl ExternalCommand for CatalogServicePostValidateYamlConfig {
+    fn get_command(&self) -> &Vec<String> {
+        &self.command
+    }
+
+    fn get_timeout(&self) -> u64 {
+        self.timeout.unwrap_or(DEFAULT_TIMEOUT_IN_SECONDS)
     }
 }
 

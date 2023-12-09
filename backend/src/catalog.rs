@@ -9,8 +9,7 @@ use tokio::process;
 use tokio::time::timeout;
 use tracing::debug;
 
-use crate::constants::DEFAULT_TIMEOUT_IN_SECONDS;
-use crate::yaml_config::{CatalogServiceYamlConfig, CatalogYamlConfig, YamlConfig};
+use crate::yaml_config::{CatalogServiceYamlConfig, CatalogYamlConfig, ExternalCommand, YamlConfig};
 
 #[derive(Serialize, Deserialize)]
 pub struct ResultsResponse<T> {
@@ -84,6 +83,58 @@ pub async fn list_catalog_services(
     (StatusCode::OK, Json(ResultsResponse { message: None, results: catalog.services.clone().unwrap_or(vec![]) }))
 }
 
+async fn execute_command<'a, T>(
+    service_slug: &'a str,
+    external_command: &T,
+    json_payload: &'a str,
+) -> Result<JobOutputResult, String> where T: ExternalCommand {
+    let cmd_one_line = external_command.get_command().join(" ");
+
+    debug!("executing validate script '{}' with payload '{}'", &cmd_one_line, json_payload);
+
+    if external_command.get_command().len() == 1 {
+        return Err(format!("Validate script '{}' is invalid. \
+                Be explicit on the command to execute, e.g. 'python3 examples/validation_script.py'",
+                           external_command.get_command()[0]));
+    }
+
+    let mut cmd = process::Command::new(&external_command.get_command()[0]);
+
+    for arg in external_command.get_command()[1..].iter() {
+        cmd.arg(arg);
+    }
+
+    cmd.arg(json_payload);
+
+    let mut child = match cmd.spawn() {
+        Ok(child) => child,
+        Err(err) => return Err(format!("Validate script '{}' failed: {}", &cmd_one_line, err))
+    };
+
+    let exit_status = match timeout(Duration::from_secs(external_command.get_timeout()), child.wait()).await {
+        Ok(exit_status) => exit_status,
+        Err(_) => return Err(match child.kill().await {
+            Ok(_) => format!(
+                "Validate script '{}' timed out after {} seconds",
+                &cmd_one_line,
+                external_command.get_timeout()
+            ),
+            Err(err) => format!(
+                "Validate script '{}' timed out after {} seconds, but failed to kill the process: {}",
+                &cmd_one_line, external_command.get_timeout(), err
+            )
+        })
+    }.unwrap();
+
+    if !exit_status.success() {
+        return Err(format!("Validate script '{}' failed: {:?}", &cmd_one_line, exit_status));
+    }
+
+    // TODO parse output.stdout and output.stderr and forward to the frontend
+
+    Ok(consume_job_output_result_from_json_output_env(service_slug))
+}
+
 #[debug_handler]
 pub async fn exec_catalog_service_validate_scripts(
     Extension(yaml_config): Extension<Arc<YamlConfig>>,
@@ -112,69 +163,15 @@ pub async fn exec_catalog_service_validate_scripts(
     };
 
     for v in service.validate.as_ref().unwrap_or(&vec![]) {
-        let json_payload = serde_json::to_string(&job_results).unwrap();
-
-        let cmd_one_line = v.command.join(" ");
-
-        debug!("executing validate script '{}' with payload '{}'", &cmd_one_line, json_payload);
-
-        if v.command.len() == 1 {
-            return (StatusCode::BAD_REQUEST, Json(JobResponse {
-                message: Some(format!("Validate script '{}' is invalid. \
-                Be explicit on the command to execute, e.g. 'python3 examples/validation_script.py'", v)),
-                results: None,
-            }));
-        }
-
-        let mut cmd = process::Command::new(&v.command[0]);
-
-        for arg in v.command[1..].iter() {
-            cmd.arg(arg);
-        }
-
-        cmd.arg(json_payload);
-
-        let mut child = match cmd.spawn() {
-            Ok(child) => child,
-            Err(err) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(JobResponse {
-                message: Some(format!("Validate script '{}' failed: {}", &cmd_one_line, err)),
+        let job_output_result = match execute_command(service_slug.as_str(), v, req.payload.to_string().as_str()).await {
+            Ok(job_output_result) => job_output_result,
+            Err(err) => return (StatusCode::BAD_REQUEST, Json(JobResponse {
+                message: Some(err),
                 results: None,
             }))
         };
 
-        let exit_status = match timeout(Duration::from_secs(v.timeout.unwrap_or(DEFAULT_TIMEOUT_IN_SECONDS)), child.wait()).await {
-            Ok(exit_status) => exit_status,
-            Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(JobResponse {
-                message: Some(match child.kill().await {
-                    Ok(_) => format!(
-                        "Validate script '{}' timed out after {} seconds",
-                        &cmd_one_line,
-                        v.timeout.unwrap_or(DEFAULT_TIMEOUT_IN_SECONDS)
-                    ),
-                    Err(err) => format!(
-                        "Validate script '{}' timed out after {} seconds, but failed to kill the process: {}",
-                        &cmd_one_line, v.timeout.unwrap_or(DEFAULT_TIMEOUT_IN_SECONDS), err
-                    )
-                }),
-                results: None,
-            }))
-        }.unwrap();
-
-        if !exit_status.success() {
-            return (StatusCode::BAD_REQUEST, Json(JobResponse {
-                message: Some(
-                    format!("Validate script '{}' failed: {:?}",
-                            &cmd_one_line,
-                            exit_status
-                    )
-                ),
-                results: None,
-            }));
-        }
-
-        // TODO parse output.stdout and output.stderr and forward to the frontend
-
-        let _ = job_results.results.push(consume_job_output_result_from_json_output_env(service_slug.as_str()));
+        let _ = job_results.results.push(job_output_result);
     }
 
     (StatusCode::OK, Json(JobResponse { message: None, results: Some(job_results) }))
@@ -186,7 +183,42 @@ pub async fn exec_catalog_service_post_validate_scripts(
     Path((catalog_slug, service_slug)): Path<(String, String)>,
     Json(req): Json<ExecValidateScriptRequest>,
 ) -> (StatusCode, Json<JobResponse>) {
-    todo!("not implemented yet");
+    let catalog = match find_catalog_by_slug(&yaml_config.catalogs, catalog_slug.as_str()) {
+        Some(catalog) => catalog,
+        None => return (StatusCode::NOT_FOUND, Json(JobResponse {
+            message: Some(format!("Catalog '{}' not found", catalog_slug)),
+            results: None,
+        }))
+    };
+
+    let service = match find_catalog_service_by_slug(catalog, service_slug.as_str()) {
+        Some(service) => service,
+        None => return (StatusCode::NOT_FOUND, Json(JobResponse {
+            message: Some(format!("Service '{}' not found", service_slug)),
+            results: None,
+        }))
+    };
+
+    let mut job_results = JobResults {
+        user_fields_input: req.payload.clone(),
+        results: vec![],
+    };
+
+    for v in service.post_validate.as_ref().unwrap_or(&vec![]) {
+        let job_output_result = match execute_command(service_slug.as_str(), v, req.payload.to_string().as_str()).await {
+            Ok(job_output_result) => job_output_result,
+            Err(err) => return (StatusCode::BAD_REQUEST, Json(JobResponse {
+                message: Some(err),
+                results: None,
+            }))
+        };
+
+        let _ = job_results.results.push(job_output_result);
+    }
+
+    // TODO output_model
+
+    (StatusCode::OK, Json(JobResponse { message: None, results: Some(job_results) }))
 }
 
 #[cfg(test)]
