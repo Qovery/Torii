@@ -1,4 +1,4 @@
-# Torii
+# Torii ⛩️
 
 Torii is a simple, powerful and extensible open-source Internal Developer Portal where developers can find all the tools and
 services they need to build, deploy, and manage their applications.
