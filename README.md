@@ -1,25 +1,25 @@
 # Qovery Portal
 
-Qovery Portal is a simple, powerful and extensible open-source Internal Developer Portal where developers can find all the tools and
+Torii is a simple, powerful and extensible open-source Internal Developer Portal where developers can find all the tools and
 services they need to build, deploy, and manage their applications.
 
-Qovery Portal focus on three principles:
+Torii focus on three principles:
 
 - **Easily configurable**: Platform Engineers can easily define a catalog of tools and services available to developers. They can also
   define a scorecard and a workflow for each tool and service.
 - **Easily usable**: Developers can easily find and use the tools and services they need to build, deploy, and manage their applications via
   a simple web interface.
-- **Easily extensible**: Platform Engineers can easily extend Qovery Portal by adding new tools and services to the catalog.
+- **Easily extensible**: Platform Engineers can easily extend Torii by adding new tools and services to the catalog.
 
 That's it!
 
-> ⚠️ Qovery Portal is in active development and not ready for production yet.
+> ⚠️ Torii is in active development and not ready for production yet.
 
 ## Concepts
 
 ### Catalog Service
 
-The Catalog Service is the core of Qovery Portal. It allows Platform Engineers to define a catalog of tools and services that developers can
+The Catalog Service is the core of Torii. It allows Platform Engineers to define a catalog of tools and services that developers can
 use to build, deploy, and manage their applications.
 
 The Catalog Service is a simple YAML file that contains the list of tools and services available to developers. It also contains the list of
@@ -65,10 +65,10 @@ cargo run
 
 ## Usage
 
-To start Qovery Portal, run the following command:
+To start Torii, run the following command:
 
 ```bash
-qovery-portal --config ./config.yaml
+torii --config ./config.yaml
 ```
 
 ## Configuration
@@ -168,7 +168,7 @@ An post validation script can be any kind of script. It can be a bash script, a 
 
 - The script must exit with a non-zero exit code if the validation fails.
 - The script must be idempotent. It can be executed multiple times without side effects.
-- The output of the script must be a JSON that contains the defined model keys with their values. (Qovery Portal will update the model with
+- The output of the script must be a JSON that contains the defined model keys with their values. (Torii will update the model with
   the values returned by the script)
 
 ```json
@@ -192,7 +192,7 @@ exit 0
 
 ## Contributing
 
-Qovery Portal is still in early development. If you want to contribute, please open an issue or a pull request. We will improve the
+Torii is still in early development. If you want to contribute, please open an issue or a pull request. We will improve the
 contribution guidelines as soon as possible.
 
 ## Motivation
@@ -206,20 +206,24 @@ Today you have the choice between two options to build your Internal Developer P
 
 ## FAQ
 
-### What's the difference between Qovery Portal and Qovery (Platform)?
+### What's the difference between Torii and Qovery?
 
 - [Qovery](https://www.qovery.com) is an Internal Developer **Platform** focusing on the Software Development Lifecycle (build, deploy, run).
-- Qovery Portal is an Internal Developer **Portal** focusing on unifying the experience of all engineering tools.
+- Torii is an Internal Developer **Portal** focusing on unifying the experience of all engineering tools.
 
 Here is a features table to help you understand the difference:
 
-| Feature               | Qovery (Platform)                    | Qovery Portal |
-|-----------------------|--------------------------------------|---------------|
-| Build                 | ✅                                    | ❌             |
-| Deploy                | ✅                                    | ❌             |
-| Run                   | ✅                                    | ❌             |
-| Ephemeral Environment | ✅                                    | ❌             |
-| Self-Service          | ✅                                    | ✅             |
-| Catalog Service       | ❌                                    | ✅             |
-| Scorecard Service     | ❌                                    | ✅             |
-| Workflow Service      | Partial with the concept of Pipeline | ✅             |
+| Feature               | Qovery (Internal Developer Platform) | Torii (Internal Developer Portal) |
+|-----------------------|--------------------------------------|-----------------------------------|
+| Build                 | ✅                                    | ❌                                 |
+| Deploy                | ✅                                    | ❌                                 |
+| Run                   | ✅                                    | ❌                                 |
+| Ephemeral Environment | ✅                                    | ❌                                 |
+| Self-Service          | ✅                                    | ✅                                 |
+| Catalog Service       | ❌                                    | ✅                                 |
+| Scorecard Service     | ❌                                    | ✅                                 |
+| Workflow Service      | Partial with the concept of Pipeline | ✅                                 |
+
+### Why Torii?
+
+Torii is a [Japanese gate](https://en.wikipedia.org/wiki/Torii) most commonly found at the entrance of or within a Shinto shrine, where it symbolically marks the transition from the mundane to the sacred.
