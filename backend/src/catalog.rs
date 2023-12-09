@@ -18,14 +18,27 @@ pub struct ResultsResponse<T> {
     results: Vec<T>,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct SimpleResponse {
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub struct JobResponse {
     message: Option<String>,
+    results: Option<JobResults>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct ExecValidateScriptRequest {
     payload: serde_json::Value,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub struct JobResults {
+    pub user_fields_input: serde_json::Value,
+    pub results: Vec<JobOutputResult>,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub struct JobOutputResult {
+    pub slug: String,
+    pub output: serde_json::Value,
 }
 
 fn find_catalog_by_slug<'a>(catalogs: &'a Vec<CatalogYamlConfig>, catalog_slug: &str) -> Option<&'a CatalogYamlConfig> {
@@ -34,6 +47,25 @@ fn find_catalog_by_slug<'a>(catalogs: &'a Vec<CatalogYamlConfig>, catalog_slug: 
 
 fn find_catalog_service_by_slug<'a>(catalog: &'a CatalogYamlConfig, service_slug: &str) -> Option<&'a CatalogServiceYamlConfig> {
     catalog.services.as_ref().unwrap().iter().find(|service| service.slug == service_slug)
+}
+
+/// Extract the job output from the environment variable TORII_JSON_OUTPUT and reset it to an empty JSON object
+fn consume_job_output_result_from_json_output_env(service_slug: &str) -> JobOutputResult {
+    let r = match std::env::var("TORII_JSON_OUTPUT") {
+        Ok(json_output) => JobOutputResult {
+            slug: service_slug.to_string(),
+            output: serde_json::from_str(json_output.as_str()).unwrap_or(serde_json::json!({})),
+        },
+        Err(_) => JobOutputResult {
+            slug: service_slug.to_string(),
+            output: serde_json::json!({}),
+        }
+    };
+
+    // reset the environment variable
+    std::env::set_var("TORII_JSON_OUTPUT", "{}");
+
+    r
 }
 
 #[debug_handler]
@@ -57,32 +89,40 @@ pub async fn exec_catalog_service_validate_scripts(
     Extension(yaml_config): Extension<Arc<YamlConfig>>,
     Path((catalog_slug, service_slug)): Path<(String, String)>,
     Json(req): Json<ExecValidateScriptRequest>,
-) -> (StatusCode, Json<SimpleResponse>) {
+) -> (StatusCode, Json<JobResponse>) {
     let catalog = match find_catalog_by_slug(&yaml_config.catalogs, catalog_slug.as_str()) {
         Some(catalog) => catalog,
-        None => return (StatusCode::NOT_FOUND, Json(SimpleResponse {
-            message: Some(format!("Catalog '{}' not found", catalog_slug))
+        None => return (StatusCode::NOT_FOUND, Json(JobResponse {
+            message: Some(format!("Catalog '{}' not found", catalog_slug)),
+            results: None,
         }))
     };
 
     let service = match find_catalog_service_by_slug(catalog, service_slug.as_str()) {
         Some(service) => service,
-        None => return (StatusCode::NOT_FOUND, Json(SimpleResponse {
-            message: Some(format!("Service '{}' not found", service_slug))
+        None => return (StatusCode::NOT_FOUND, Json(JobResponse {
+            message: Some(format!("Service '{}' not found", service_slug)),
+            results: None,
         }))
     };
 
+    let mut job_results = JobResults {
+        user_fields_input: req.payload.clone(),
+        results: vec![],
+    };
+
     for v in service.validate.as_ref().unwrap_or(&vec![]) {
-        let json_payload = serde_json::to_string(&req.payload).unwrap();
+        let json_payload = serde_json::to_string(&job_results).unwrap();
 
         let cmd_one_line = v.command.join(" ");
 
         debug!("executing validate script '{}' with payload '{}'", &cmd_one_line, json_payload);
 
         if v.command.len() == 1 {
-            return (StatusCode::BAD_REQUEST, Json(SimpleResponse {
+            return (StatusCode::BAD_REQUEST, Json(JobResponse {
                 message: Some(format!("Validate script '{}' is invalid. \
-                Be explicit on the command to execute, e.g. 'python3 examples/validation_script.py'", v))
+                Be explicit on the command to execute, e.g. 'python3 examples/validation_script.py'", v)),
+                results: None,
             }));
         }
 
@@ -92,16 +132,19 @@ pub async fn exec_catalog_service_validate_scripts(
             cmd.arg(arg);
         }
 
-        let mut child = match cmd.arg(json_payload).spawn() {
+        cmd.arg(json_payload);
+
+        let mut child = match cmd.spawn() {
             Ok(child) => child,
-            Err(err) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(SimpleResponse {
-                message: Some(format!("Validate script '{}' failed: {}", &cmd_one_line, err))
+            Err(err) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(JobResponse {
+                message: Some(format!("Validate script '{}' failed: {}", &cmd_one_line, err)),
+                results: None,
             }))
         };
 
         let exit_status = match timeout(Duration::from_secs(v.timeout.unwrap_or(DEFAULT_TIMEOUT_IN_SECONDS)), child.wait()).await {
             Ok(exit_status) => exit_status,
-            Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(SimpleResponse {
+            Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(JobResponse {
                 message: Some(match child.kill().await {
                     Ok(_) => format!(
                         "Validate script '{}' timed out after {} seconds",
@@ -112,23 +155,38 @@ pub async fn exec_catalog_service_validate_scripts(
                         "Validate script '{}' timed out after {} seconds, but failed to kill the process: {}",
                         &cmd_one_line, v.timeout.unwrap_or(DEFAULT_TIMEOUT_IN_SECONDS), err
                     )
-                })
+                }),
+                results: None,
             }))
         }.unwrap();
 
         if !exit_status.success() {
-            return (StatusCode::BAD_REQUEST, Json(SimpleResponse {
+            return (StatusCode::BAD_REQUEST, Json(JobResponse {
                 message: Some(
                     format!("Validate script '{}' failed: {:?}",
                             &cmd_one_line,
                             exit_status
                     )
-                )
+                ),
+                results: None,
             }));
         }
+
+        // TODO parse output.stdout and output.stderr and forward to the frontend
+
+        let _ = job_results.results.push(consume_job_output_result_from_json_output_env(service_slug.as_str()));
     }
 
-    (StatusCode::OK, Json(SimpleResponse { message: None }))
+    (StatusCode::OK, Json(JobResponse { message: None, results: Some(job_results) }))
+}
+
+#[debug_handler]
+pub async fn exec_catalog_service_post_validate_scripts(
+    Extension(yaml_config): Extension<Arc<YamlConfig>>,
+    Path((catalog_slug, service_slug)): Path<(String, String)>,
+    Json(req): Json<ExecValidateScriptRequest>,
+) -> (StatusCode, Json<JobResponse>) {
+    todo!("not implemented yet");
 }
 
 #[cfg(test)]
@@ -140,7 +198,7 @@ mod tests {
     use axum::http::StatusCode;
 
     use crate::catalog::{exec_catalog_service_validate_scripts, ExecValidateScriptRequest, find_catalog_by_slug, find_catalog_service_by_slug};
-    use crate::yaml_config::{CatalogFieldYamlConfig, CatalogServiceValidateYamlConfig, CatalogServiceYamlConfig, CatalogYamlConfig, YamlConfig};
+    use crate::yaml_config::{CatalogFieldYamlConfig, CatalogServicePostValidateYamlConfig, CatalogServiceValidateYamlConfig, CatalogServiceYamlConfig, CatalogYamlConfig, YamlConfig};
 
     #[test]
     fn test_find_catalog_by_slug() {
@@ -177,6 +235,7 @@ mod tests {
                     description: None,
                     fields: None,
                     validate: None,
+                    post_validate: None,
                 },
                 CatalogServiceYamlConfig {
                     slug: "service-2".to_string(),
@@ -184,6 +243,7 @@ mod tests {
                     description: None,
                     fields: None,
                     validate: None,
+                    post_validate: None,
                 },
             ]),
         };
@@ -236,6 +296,16 @@ mod tests {
                                     ],
                                 },
                             ]),
+                            post_validate: Some(vec![
+                                CatalogServicePostValidateYamlConfig {
+                                    timeout: None,
+                                    command: vec![
+                                        "python3".to_string(),
+                                        "examples/validation_script_ok.py".to_string(),
+                                    ],
+                                    output_model: None,
+                                },
+                            ]),
                         },
                     ]),
                 },
@@ -247,7 +317,7 @@ mod tests {
     async fn test_exec_catalog_service_validate_scripts_ok() {
         let yaml_config = Arc::from(get_yaml_config());
 
-        let x = exec_catalog_service_validate_scripts(
+        let (status_code, job_response) = exec_catalog_service_validate_scripts(
             Extension(yaml_config),
             Path(("catalog-1".to_string(), "service-1".to_string())),
             Json(ExecValidateScriptRequest {
@@ -258,8 +328,10 @@ mod tests {
             }),
         ).await;
 
-        assert_eq!(x.0, StatusCode::OK);
-        assert_eq!(x.1.message, None);
+        assert_eq!(status_code, StatusCode::OK);
+        assert_eq!(job_response.message, None);
+
+        assert_eq!(job_response.results.as_ref().unwrap().results.len() > 0, true);
     }
 
     #[tokio::test]
@@ -275,7 +347,7 @@ mod tests {
             ],
         });
 
-        let x = exec_catalog_service_validate_scripts(
+        let (status_code, job_response) = exec_catalog_service_validate_scripts(
             Extension(Arc::from(yaml_config)),
             Path(("catalog-1".to_string(), "service-1".to_string())),
             Json(ExecValidateScriptRequest {
@@ -286,8 +358,9 @@ mod tests {
             }),
         ).await;
 
-        assert_eq!(x.0, StatusCode::BAD_REQUEST);
-        assert_eq!(x.1.message.as_ref().unwrap().is_empty(), false);
+        assert_eq!(status_code, StatusCode::BAD_REQUEST);
+        assert_eq!(job_response.message.as_ref().unwrap().is_empty(), false);
+        assert_eq!(job_response.results.as_ref(), None);
     }
 
     #[tokio::test]

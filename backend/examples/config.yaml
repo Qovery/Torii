@@ -29,15 +29,15 @@ catalogs:
               - bash
               - post-validation-script-1.sh # executed first
             timeout: 60 # timeout in seconds
-            model: string (optional) # model name
+            output-model: string (optional) # model name
           - command:
               - bash
               - post-validation-script-2.sh # AND then this one
-            model: string (optional) # model name
+            output-model: string (optional) # model name
           - command:
               - bash
               - post-validation-script-3.sh # AND finally this one
-            model: string (optional) # model name
+            output-model: string (optional) # model name
 models:
   - name: string
     description: string (optional)

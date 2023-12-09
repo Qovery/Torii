@@ -22,6 +22,7 @@ pub struct CatalogServiceYamlConfig {
     pub description: Option<String>,
     pub fields: Option<Vec<CatalogFieldYamlConfig>>,
     pub validate: Option<Vec<CatalogServiceValidateYamlConfig>>,
+    pub post_validate: Option<Vec<CatalogServicePostValidateYamlConfig>>,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
@@ -30,7 +31,21 @@ pub struct CatalogServiceValidateYamlConfig {
     pub timeout: Option<u64>,
 }
 
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+pub struct CatalogServicePostValidateYamlConfig {
+    pub command: Vec<String>,
+    pub timeout: Option<u64>,
+    pub output_model: Option<String>,
+}
+
 impl Display for CatalogServiceValidateYamlConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let command = self.command.join(" ");
+        write!(f, "{}", command)
+    }
+}
+
+impl Display for CatalogServicePostValidateYamlConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let command = self.command.join(" ");
         write!(f, "{}", command)
