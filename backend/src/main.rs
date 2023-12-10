@@ -6,6 +6,7 @@ use axum::{Extension, Router};
 use axum::http::{StatusCode, Uri};
 use axum::routing::{get, post};
 use clap::Parser;
+use tower_http::cors::{Any, CorsLayer};
 use tracing::{error, info};
 use tracing::log::warn;
 use tracing_subscriber::layer::SubscriberExt;
@@ -65,7 +66,8 @@ async fn main() {
         .route("/catalogs/:slug/services", get(catalog::list_catalog_services))
         .route("/catalogs/:slug/services/:slug/validate", post(catalog::exec_catalog_service_validate_scripts))
         .route("/catalogs/:slug/services/:slug/execute", post(catalog::exec_catalog_service_post_validate_scripts))
-        .layer(Extension(yaml_config));
+        .layer(Extension(yaml_config))
+        .layer(CorsLayer::new().allow_origin(Any));
     //.route("/catalog/:id", get(catalog::get_catalog_by_id))
     //.route("/catalog", post(catalog::create_catalog));
 
