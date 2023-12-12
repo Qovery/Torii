@@ -142,26 +142,39 @@ async fn execute_command<'a, T>(
     Ok(consume_job_output_result_from_json_output_env(service_slug))
 }
 
+fn get_catalog_and_service<'a>(
+    yaml_config: &'a YamlConfig,
+    catalog_slug: &'a str,
+    service_slug: &'a str,
+) -> Result<(&'a CatalogYamlConfig, &'a CatalogServiceYamlConfig), (StatusCode, Json<JobResponse>)> {
+    let catalog = match find_catalog_by_slug(&yaml_config.catalogs, catalog_slug) {
+        Some(catalog) => catalog,
+        None => return Err((StatusCode::NOT_FOUND, Json(JobResponse {
+            message: Some(format!("Catalog '{}' not found", catalog_slug)),
+            results: None,
+        })))
+    };
+
+    let service = match find_catalog_service_by_slug(catalog, service_slug) {
+        Some(service) => service,
+        None => return Err((StatusCode::NOT_FOUND, Json(JobResponse {
+            message: Some(format!("Service '{}' not found", service_slug)),
+            results: None,
+        })))
+    };
+
+    Ok((catalog, service))
+}
+
 #[debug_handler]
 pub async fn exec_catalog_service_validate_scripts(
     Extension(yaml_config): Extension<Arc<YamlConfig>>,
     Path((catalog_slug, service_slug)): Path<(String, String)>,
     Json(req): Json<ExecValidateScriptRequest>,
 ) -> (StatusCode, Json<JobResponse>) {
-    let catalog = match find_catalog_by_slug(&yaml_config.catalogs, catalog_slug.as_str()) {
-        Some(catalog) => catalog,
-        None => return (StatusCode::NOT_FOUND, Json(JobResponse {
-            message: Some(format!("Catalog '{}' not found", catalog_slug)),
-            results: None,
-        }))
-    };
-
-    let service = match find_catalog_service_by_slug(catalog, service_slug.as_str()) {
-        Some(service) => service,
-        None => return (StatusCode::NOT_FOUND, Json(JobResponse {
-            message: Some(format!("Service '{}' not found", service_slug)),
-            results: None,
-        }))
+    let (catalog, service) = match get_catalog_and_service(&yaml_config, catalog_slug.as_str(), service_slug.as_str()) {
+        Ok((catalog, service)) => (catalog, service),
+        Err(err) => return err
     };
 
     let mut job_results = JobResults {
@@ -190,20 +203,9 @@ pub async fn exec_catalog_service_post_validate_scripts(
     Path((catalog_slug, service_slug)): Path<(String, String)>,
     Json(req): Json<ExecValidateScriptRequest>,
 ) -> (StatusCode, Json<JobResponse>) {
-    let catalog = match find_catalog_by_slug(&yaml_config.catalogs, catalog_slug.as_str()) {
-        Some(catalog) => catalog,
-        None => return (StatusCode::NOT_FOUND, Json(JobResponse {
-            message: Some(format!("Catalog '{}' not found", catalog_slug)),
-            results: None,
-        }))
-    };
-
-    let service = match find_catalog_service_by_slug(catalog, service_slug.as_str()) {
-        Some(service) => service,
-        None => return (StatusCode::NOT_FOUND, Json(JobResponse {
-            message: Some(format!("Service '{}' not found", service_slug)),
-            results: None,
-        }))
+    let (_, service) = match get_catalog_and_service(&yaml_config, catalog_slug.as_str(), service_slug.as_str()) {
+        Ok((catalog, service)) => (catalog, service),
+        Err(err) => return err
     };
 
     let mut job_results = JobResults {

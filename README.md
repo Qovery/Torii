@@ -17,29 +17,30 @@ That's it!
 
 ## Concepts
 
-### Catalog Service
+### Catalogs Service
 
-The Catalog Service is the core of Torii. It allows Platform Engineers to define a catalog of tools and services that developers can
+The Catalogs Service is the core of Torii. It allows Platform Engineers to define a catalog of tools and services that developers can
 use to build, deploy, and manage their applications.
 
-The Catalog Service is a simple YAML file that contains the list of tools and services available to developers. It also contains the list of
+The Catalogs Service is a simple YAML file that contains the list of tools and services available to developers. It also contains the list
+of
 scripts to run to validate and submit the form.
 
 ### Scorecard Service
 
 The Scorecard Service is a simple service that allows Platform Engineers to define a scorecard for each tool and service available in the
-Catalog Service. The scorecard is a simple YAML file that contains the list of criteria and the score for each criterion.
+Catalogs Service. The scorecard is a simple YAML file that contains the list of criteria and the score for each criterion.
 
 ### Workflow Service
 
 The Workflow Service is a simple service that allows Platform Engineers to define a workflow for each tool and service available in the
-Catalog Service. The workflow is a simple YAML file that contains the list of steps and the order of each step.
+Catalogs Service. The workflow is a simple YAML file that contains the list of steps and the order of each step.
 
 ## Features
 
 | Feature           | Status              |
 |-------------------|---------------------|
-| Catalog Service   | WIP                 |
+| Catalogs Service  | WIP                 |
 | Scorecard Service | Not implemented yet |
 | Workflow Service  | Not implemented yet |
 | Authentication    | Not implemented yet |
@@ -220,7 +221,7 @@ Here is a features table to help you understand the difference:
 | Run                   | ✅                                    | ❌                                 |
 | Ephemeral Environment | ✅                                    | ❌                                 |
 | Self-Service          | ✅                                    | ✅                                 |
-| Catalog Service       | ❌                                    | ✅                                 |
+| Catalogs Service      | ❌                                    | ✅                                 |
 | Scorecard Service     | ❌                                    | ✅                                 |
 | Workflow Service      | Partial with the concept of Pipeline | ✅                                 |
 
