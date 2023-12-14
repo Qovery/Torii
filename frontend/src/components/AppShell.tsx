@@ -266,6 +266,7 @@ function getNavigationJsx(
                   {/* 44px */}
                   <Disclosure.Button
                     as="a"
+                    href="#"
                     // href={subItem.href}
                     className={classNames(
                       subItem.current ? 'bg-gray-50' : 'hover:bg-gray-50',
