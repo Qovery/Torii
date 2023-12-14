@@ -1,7 +1,9 @@
-import React, {Fragment, useState} from 'react'
+import {Fragment, useEffect, useState} from 'react'
 import {Dialog, Disclosure, Transition} from '@headlessui/react'
 import {Bars3Icon, BeakerIcon, ChevronRightIcon, ClipboardIcon, HomeIcon, ShieldCheckIcon, XMarkIcon,} from '@heroicons/react/24/outline'
 import {classNames} from "@/lib/utils.ts";
+import {useQuery} from "@tanstack/react-query";
+import {API_URL} from "@/config.ts";
 
 class NavigationItem {
   name: string
@@ -25,29 +27,21 @@ class NavigationChildrenItem {
   name: string
   href: string
   current: boolean
+  catalogServices: any[]
 
-  constructor(name: string, href: string, current: boolean) {
+  constructor(name: string, href: string, current: boolean, catalogServices: any[]) {
     this.name = name
     this.href = href
     this.current = current
+    this.catalogServices = catalogServices
   }
 
 }
 
-const navigation: NavigationItem[] = [
-  new NavigationItem('Dashboard', '#', HomeIcon, false, true),
-  new NavigationItem('Self Service', '#', BeakerIcon, true, false, [
-    new NavigationChildrenItem('Default', '/catalogs', true),
-    new NavigationChildrenItem('Toto', '/services', false),
-  ]),
-  new NavigationItem('Scorecard', '#', ClipboardIcon, false, true),
-  new NavigationItem('Audit', '#', ShieldCheckIcon, false, true),
-]
-
-
 export default function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [currentTabTitle, setCurrentTabTitle] = useState(navigation.find((item) => item.current)?.name)
+  const [currentTabTitle, setCurrentTabTitle] = useState('Dashboard')
+  const [navigationItems, setNavigationItems] = useState<NavigationItem[]>([])
 
   function setCurrentTabHelper(navItem: NavigationItem, subItem?: NavigationChildrenItem) {
     if (subItem) {
@@ -58,6 +52,31 @@ export default function AppShell() {
 
     // TODO change sub item selected if needed and load data
   }
+
+  const {status, data} = useQuery({
+    queryKey: ['catalogs'],
+    queryFn: () =>
+      fetch(`${API_URL}/catalogs`).then(
+        (res) => res.json(),
+      ),
+  })
+
+  useEffect(() => {
+    if (status === 'success') {
+      const ni = [
+        new NavigationItem('Dashboard', '#', HomeIcon, false, true),
+        new NavigationItem('Self Service', '#', BeakerIcon, true, false, data.results.map((catalog: any): NavigationChildrenItem => {
+          // populate catalogs in navigation
+          return new NavigationChildrenItem(catalog.name, `/catalogs/${catalog.slug}/services`, false, catalog.services);
+        })),
+        new NavigationItem('Scorecard', '#', ClipboardIcon, false, true),
+        new NavigationItem('Audit', '#', ShieldCheckIcon, false, true),
+      ]
+
+      setCurrentTabTitle(ni.find((item) => item.current)?.name || 'Dashboard')
+      setNavigationItems(ni)
+    }
+  }, [status, data]);
 
   return (
     <>
@@ -125,7 +144,7 @@ export default function AppShell() {
                       <ul role="list" className="flex flex-1 flex-col gap-y-7">
                         <li>
                           <ul role="list" className="-mx-2 space-y-1">
-                            {navigation.map((item) => getNavigationJsx(item, setCurrentTabHelper))}
+                            {navigationItems.map((item) => getNavigationJsx(item, setCurrentTabHelper))}
                           </ul>
                         </li>
                       </ul>
@@ -153,7 +172,7 @@ export default function AppShell() {
               <ul role="list" className="flex flex-1 flex-col gap-y-7">
                 <li>
                   <ul role="list" className="-mx-2 space-y-1">
-                    {navigation.map((item) => getNavigationJsx(item, setCurrentTabHelper))}
+                    {navigationItems.map((item) => getNavigationJsx(item, setCurrentTabHelper))}
                   </ul>
                 </li>
                 {/*<li className="-mx-6 mt-auto">*/}
