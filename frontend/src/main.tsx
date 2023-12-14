@@ -7,8 +7,7 @@ import {createBrowserRouter, RouterProvider,} from "react-router-dom";
 import Root from "./routes/root";
 // @ts-ignore
 import ErrorPage from "@/error-page.jsx";
-import Index from "@/routes";
-import Catalogs from "@/routes/catalogs.tsx";
+import AppShell from "@/components/AppShell.tsx";
 
 const router = createBrowserRouter([
   {
@@ -18,16 +17,12 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Index/>,
+        element: <AppShell/>,
       },
-      {
-        path: "/catalogs",
-        element: <Catalogs/>
-      },
-      {
-        path: "/catalogs/:catalogId/services",
-        element: <ErrorPage/>,
-      }
+      // {
+      //   path: "/catalogs/:catalogSlug/services",
+      //   Component: AppShell,
+      // }
     ],
   },
 ]);

@@ -4,6 +4,7 @@ import {Bars3Icon, BeakerIcon, ChevronRightIcon, ClipboardIcon, HomeIcon, Shield
 import {classNames} from "@/lib/utils.ts";
 import {useQuery} from "@tanstack/react-query";
 import {API_URL} from "@/config.ts";
+import SelfService from "@/components/SelfService.tsx";
 
 class NavigationItem {
   name: string
@@ -27,13 +28,13 @@ class NavigationChildrenItem {
   name: string
   href: string
   current: boolean
-  catalogServices: any[]
+  children: JSX.Element
 
-  constructor(name: string, href: string, current: boolean, catalogServices: any[]) {
+  constructor(name: string, href: string, current: boolean, children: JSX.Element) {
     this.name = name
     this.href = href
     this.current = current
-    this.catalogServices = catalogServices
+    this.children = children
   }
 
 }
@@ -42,6 +43,7 @@ export default function AppShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [currentTabTitle, setCurrentTabTitle] = useState('Dashboard')
   const [navigationItems, setNavigationItems] = useState<NavigationItem[]>([])
+  const [content, setContent] = useState<JSX.Element | undefined>(undefined)
 
   function setCurrentTabHelper(navItem: NavigationItem, subItem?: NavigationChildrenItem) {
     if (subItem) {
@@ -50,7 +52,7 @@ export default function AppShell() {
       setCurrentTabTitle(navItem.name)
     }
 
-    // TODO change sub item selected if needed and load data
+    setContent(subItem?.children)
   }
 
   const {status, data} = useQuery({
@@ -67,7 +69,8 @@ export default function AppShell() {
         new NavigationItem('Dashboard', '#', HomeIcon, false, true),
         new NavigationItem('Self Service', '#', BeakerIcon, true, false, data.results.map((catalog: any): NavigationChildrenItem => {
           // populate catalogs in navigation
-          return new NavigationChildrenItem(catalog.name, `/catalogs/${catalog.slug}/services`, false, catalog.services);
+          return new NavigationChildrenItem(catalog.name, `/catalogs/${catalog.slug}/services`, false,
+            <SelfService catalogSlug={catalog.slug} services={catalog.services}/>);
         })),
         new NavigationItem('Scorecard', '#', ClipboardIcon, false, true),
         new NavigationItem('Audit', '#', ShieldCheckIcon, false, true),
@@ -211,7 +214,7 @@ export default function AppShell() {
         </div>
 
         <main className="py-10 lg:pl-72">
-          <div className="px-4 sm:px-6 lg:px-8">{/* Your content */}</div>
+          <div className="px-4 sm:px-6 lg:px-8">{content}</div>
         </main>
       </div>
     </>
@@ -263,7 +266,7 @@ function getNavigationJsx(
                   {/* 44px */}
                   <Disclosure.Button
                     as="a"
-                    href={subItem.href}
+                    // href={subItem.href}
                     className={classNames(
                       subItem.current ? 'bg-gray-50' : 'hover:bg-gray-50',
                       'block rounded-md py-2 pr-2 pl-9 text-sm leading-6 text-gray-700'
