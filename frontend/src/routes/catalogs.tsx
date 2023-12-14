@@ -3,7 +3,7 @@ import axios from "axios";
 import {API_URL} from "../config.ts";
 import {useQuery} from "@tanstack/react-query";
 
-function Catalog() {
+function Catalogs() {
   const {isPending, error, data, isFetching} = useQuery({
     queryKey: ['repoData'],
     queryFn: () =>
@@ -28,4 +28,4 @@ function Catalog() {
   );
 }
 
-export default Catalog;
+export default Catalogs;

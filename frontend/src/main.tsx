@@ -8,7 +8,7 @@ import Root from "./routes/root";
 // @ts-ignore
 import ErrorPage from "@/error-page.jsx";
 import Index from "@/routes";
-import Catalog from "@/routes/catalog";
+import Catalogs from "@/routes/catalogs.tsx";
 
 const router = createBrowserRouter([
   {
@@ -21,8 +21,12 @@ const router = createBrowserRouter([
         element: <Index/>,
       },
       {
-        path: "/catalog",
-        element: <Catalog/>
+        path: "/catalogs",
+        element: <Catalogs/>
+      },
+      {
+        path: "/catalogs/:catalogId/services",
+        element: <ErrorPage/>,
       }
     ],
   },

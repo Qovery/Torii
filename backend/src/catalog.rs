@@ -172,7 +172,7 @@ pub async fn exec_catalog_service_validate_scripts(
     Path((catalog_slug, service_slug)): Path<(String, String)>,
     Json(req): Json<ExecValidateScriptRequest>,
 ) -> (StatusCode, Json<JobResponse>) {
-    let (catalog, service) = match get_catalog_and_service(&yaml_config, catalog_slug.as_str(), service_slug.as_str()) {
+    let (_, service) = match get_catalog_and_service(&yaml_config, catalog_slug.as_str(), service_slug.as_str()) {
         Ok((catalog, service)) => (catalog, service),
         Err(err) => return err
     };
