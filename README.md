@@ -86,7 +86,7 @@ torii --config ./config.yaml
 
 Using docker compose 
 ```bash
-compose up
+docker compose up
 ```
 
 ## Configuration

@@ -14,7 +14,7 @@ RUN cargo build --release
 ###
 ###
 
-FROM alpine:latest
+FROM scratch
 
 WORKDIR /app
 
