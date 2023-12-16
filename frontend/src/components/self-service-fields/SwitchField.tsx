@@ -7,7 +7,7 @@ interface Props {
   onChange?: (value: boolean) => void;
 }
 
-export default function BooleanField({field, onChange}: Props) {
+export default function SwitchField({field, onChange}: Props) {
   let defaultValue = false;
   if (field.default.toLowerCase() === 'true') {
     defaultValue = true;
@@ -36,6 +36,8 @@ export default function BooleanField({field, onChange}: Props) {
         </Switch.Description>
       </span>
           <Switch
+            id={field.slug}
+            name={field.slug}
             checked={enabled}
             onChange={(v) => {
               if (onChange) {

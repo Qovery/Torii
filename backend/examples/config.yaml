@@ -24,12 +24,10 @@ catalogs:
             description: Time to live for your environment (in hours)
             placeholder: 24
             type: number
-            default: 24
             required: true
           - slug: seed
             title: Seed
             description: Do you want to seed your environment with some data?
-            placeholder: 24
             type: boolean
             default: true
         validate:

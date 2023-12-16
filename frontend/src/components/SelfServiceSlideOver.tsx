@@ -3,14 +3,14 @@ import {Dialog, Transition} from '@headlessui/react'
 import {XMarkIcon} from '@heroicons/react/24/outline'
 import TextField from "@/components/self-service-fields/TextField.tsx";
 import TextareaField from "@/components/self-service-fields/TextareaField.tsx";
-import BooleanField from "@/components/self-service-fields/BooleanField.tsx";
+import SwitchField from "@/components/self-service-fields/SwitchField.tsx";
 
 interface Props {
   service: any;
   onClose: () => void;
 }
 
-function getField(field: any): JSX.Element {
+function getField(field: any, onChange: (value: any) => void): JSX.Element {
   switch (field.type) {
     case 'text':
       return <TextField key={field.slug} field={field}/>
@@ -19,13 +19,27 @@ function getField(field: any): JSX.Element {
     case 'textarea':
       return <TextareaField key={field.slug} field={field}/>
     case 'boolean':
-      return <BooleanField key={field.slug} field={field}/>
+      return <SwitchField key={field.slug} field={field} onChange={(v) => onChange(v)}/>
     default:
       return <p>'{field.type}' is not a supported field</p>
   }
 }
 
 export default function SelfServiceSlideOver({service, onClose}: Props): JSX.Element {
+
+  const handleSubmit = (event: any) => {
+    event.preventDefault()
+
+    const fields = []
+    for (const [id, value] of new FormData(event.target)) {
+      fields.push({
+        field_slug: id,
+        value: value
+      })
+    }
+
+    console.log({data: fields})
+  }
 
   return (
     <Dialog as="div" className="relative z-10" onClose={onClose}>
@@ -54,7 +68,7 @@ export default function SelfServiceSlideOver({service, onClose}: Props): JSX.Ele
               leaveTo="translate-x-full"
             >
               <Dialog.Panel className="pointer-events-auto w-screen max-w-2xl">
-                <form className="flex h-full flex-col overflow-y-scroll bg-white shadow-xl">
+                <form className="flex h-full flex-col overflow-y-scroll bg-white shadow-xl" onSubmit={handleSubmit}>
                   <div className="flex-1">
                     {/* Header */}
                     <div className="bg-gray-50 px-4 py-6 sm:px-6">
@@ -84,7 +98,9 @@ export default function SelfServiceSlideOver({service, onClose}: Props): JSX.Ele
                     {/* Divider container */}
                     <div className="space-y-6 py-6 sm:space-y-0 sm:py-0">
                       {service.fields.map((field: any) => {
-                        return getField(field)
+                        return getField(field, (value) => {
+                          console.log({field: field.slug, value: value})
+                        })
                       })}
                     </div>
                   </div>
