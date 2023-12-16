@@ -22,6 +22,7 @@ pub struct CatalogServiceYamlConfig {
     pub slug: String,
     pub name: String,
     pub description: Option<String>,
+    pub icon: Option<String>,
     pub fields: Option<Vec<CatalogFieldYamlConfig>>,
     pub validate: Option<Vec<CatalogServiceValidateYamlConfig>>,
     pub post_validate: Option<Vec<CatalogServicePostValidateYamlConfig>>,

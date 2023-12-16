@@ -69,7 +69,6 @@ export default function SelfServiceCard({title, description, icon, index, totalC
         <div className="mt-8">
           <h3 className="text-base font-semibold leading-6 text-gray-900">
             <a href="#" className="focus:outline-none" onClick={onClick}>
-              {/* Extend touch target to entire panel */}
               <span className="absolute inset-0" aria-hidden="true"/>
               {title}
             </a>

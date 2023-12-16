@@ -4,18 +4,34 @@ catalogs:
     description: Default catalog
     services:
       - slug: new-testing-environment
-        name: new testing environment
-        description: spin up a testing environment
-        icon: https://example.com/icon.png
+        name: New Testing Environment
+        description: spin up a temporary testing environment
+        icon: target
         fields:
-          - slug: environment-name
-            title: environment name
+          - slug: name
+            title: Name
             description: provide a name for your environment
             placeholder: testing-123
-            type: string
+            type: text
             default: testing-123
             required: true
-            autocomplete-fetcher: ./your-script.py
+          - slug: description
+            title: Description
+            description: provide a description for your environment - what's good for?
+            type: textarea
+          - slug: ttl
+            title: TTL
+            description: Time to live for your environment (in hours)
+            placeholder: 24
+            type: number
+            default: 24
+            required: true
+          - slug: seed
+            title: Seed
+            description: Do you want to seed your environment with some data?
+            placeholder: 24
+            type: boolean
+            default: true
         validate:
           - command:
               - bash
@@ -38,16 +54,16 @@ catalogs:
               - bash
               - post-validation-script-3.sh # AND finally this one
             output-model: string (optional) # model name
-      - slug: new-testing-environment-2
-        name: new testing environment 2
-        description: spin up a testing environment 2
-        icon: https://example.com/icon.png
+      - slug: shutdown-testing-environment
+        name: Shutdown Testing Environment
+        description: shutdown a temporary testing environment
+        icon: trash
         fields:
           - slug: environment-name
             title: environment name
             description: provide a name for your environment
             placeholder: testing-123
-            type: string
+            type: text
             default: testing-123
             required: true
             autocomplete-fetcher: ./your-script.py
@@ -80,55 +96,55 @@ catalogs:
       - slug: another-service
         name: another service
         description: another service
-        icon: https://example.com/icon.png
+        icon: target
         fields:
           - slug: field-1
             title: field 1
             description: field 1
             placeholder: field 1
-            type: string
+            type: text
             default: field 1
             required: true
           - slug: field-2
             title: field 2
             description: field 2
             placeholder: field 2
-            type: string
+            type: text
             default: field 2
             required: true
           - slug: field-3
             title: field 3
             description: field 3
             placeholder: field 3
-            type: string
+            type: text
             default: field 3
             required: true
           - slug: field-4
             title: field 4
             description: field 4
             placeholder: field 4
-            type: string
+            type: text
             default: field 4
             required: true
           - slug: field-5
             title: field 5
             description: field 5
             placeholder: field 5
-            type: string
+            type: text
             default: field 5
             required: true
           - slug: field-6
             title: field 6
             description: field 6
             placeholder: field 6
-            type: string
+            type: text
             default: field 6
             required: true
           - slug: field-7
             title: field 7
             description: field 7
             placeholder: field 7
-            type: string
+            type: text
             default: field 7
             required: true
           - slug: field-8
@@ -142,14 +158,14 @@ catalogs:
             title: field 9
             description: field 9
             placeholder: field 9
-            type: string
+            type: text
             default: field 9
             required: true
           - slug: field-10
             title: field 10
             description: field 10
             placeholder: field 10
-            type: string
+            type: text
 models:
   - name: string
     description: string (optional)

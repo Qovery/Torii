@@ -1,13 +1,25 @@
 import EmptyState from "@/components/EmptyState.tsx";
 import SelfServiceCard from "@/components/SelfServiceCard.tsx";
 import {TargetIcon} from "lucide-react";
-import SelfServiceSideOver from "@/components/SelfServiceSideOver.tsx";
+import SelfServiceSlideOver from "@/components/SelfServiceSlideOver.tsx";
 import {useState} from "react";
 import {Transition} from "@headlessui/react";
+import {TrashIcon} from "@heroicons/react/24/outline";
 
 interface Props {
   catalogSlug: string
   services: any[]
+}
+
+function getIcon(icon?: string): JSX.Element {
+  switch (icon?.toLowerCase()) {
+    case 'target':
+      return <TargetIcon className="h-6 w-6" aria-hidden="true"/>
+    case 'trash':
+      return <TrashIcon className="h-6 w-6" aria-hidden="true"/>
+    default:
+      return <TargetIcon className="h-6 w-6" aria-hidden="true"/>
+  }
 }
 
 export default function SelfService({catalogSlug, services}: Props) {
@@ -15,10 +27,6 @@ export default function SelfService({catalogSlug, services}: Props) {
 
   if (services.length === 0) {
     return <EmptyState text="No Services" subText="This catalog has no services."/>
-  }
-
-  function getIcon(): JSX.Element {
-    return <TargetIcon className="h-6 w-6" aria-hidden="true"/>
   }
 
   return <>
@@ -34,7 +42,7 @@ export default function SelfService({catalogSlug, services}: Props) {
             key={service.name}
             title={service.name}
             description={service.description}
-            icon={getIcon()}
+            icon={getIcon(service.icon)}
             index={idx}
             totalCards={services.length}
             onClick={() => {
@@ -44,7 +52,7 @@ export default function SelfService({catalogSlug, services}: Props) {
       }
     </div>
     <Transition show={showSideOver.show}>
-      <SelfServiceSideOver service={showSideOver.service} onClose={() => setShowSideOver({show: false, service: showSideOver.service})}/>
+      <SelfServiceSlideOver service={showSideOver.service} onClose={() => setShowSideOver({show: false, service: showSideOver.service})}/>
     </Transition>
   </>
 }
