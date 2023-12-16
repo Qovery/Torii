@@ -18,6 +18,6 @@ FROM scratch
 
 WORKDIR /app
 
-COPY --from=builder /app/target/release/backend /app/portal
+COPY --from=builder /app/target/release/backend torii
 
-CMD ["/app/portal"]
+ENTRYPOINT ["/app/torii"]

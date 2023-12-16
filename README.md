@@ -64,12 +64,29 @@ cargo build
 cargo run
 ```
 
+### Using containers 
+
+Build the container images using make for convenience
+
+```bash
+#From the root of the repository
+make docker_build_backend
+
+make docker_build_frontend
+```
+
+
 ## Usage
 
 To start Torii, run the following command:
 
 ```bash
 torii --config ./config.yaml
+```
+
+Using docker compose 
+```bash
+docker compose up
 ```
 
 ## Configuration
