@@ -149,7 +149,7 @@ catalogs:
             title: field 8
             description: field 8
             placeholder: field 8
-            type: string
+            type: text
             default: field 8
             required: true
           - slug: field-9

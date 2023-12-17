@@ -87,41 +87,21 @@ pub struct CatalogFieldYamlConfig {
     pub description: Option<String>,
     pub placeholder: Option<String>,
     #[serde(rename = "type")]
-    pub type_: String,
+    pub type_: CatalogFieldType,
     pub default: Option<String>,
     pub required: Option<bool>,
     pub autocomplete_fetcher: Option<String>,
 }
 
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "snake_case")]
 pub enum CatalogFieldType {
-    String,
+    Text,
+    Textarea,
     Number,
     Boolean,
     Date,
-    DateTime,
+    Datetime,
     Time,
-    Enum,
-    Array,
-    Object,
-}
-
-impl CatalogFieldYamlConfig {
-    pub fn get_type(&self) -> CatalogFieldType {
-        match self.type_.as_str() {
-            "string" => CatalogFieldType::String,
-            "number" => CatalogFieldType::Number,
-            "boolean" => CatalogFieldType::Boolean,
-            "date" => CatalogFieldType::Date,
-            "datetime" => CatalogFieldType::DateTime,
-            "time" => CatalogFieldType::Time,
-            "enum" => CatalogFieldType::Enum,
-            "array" => CatalogFieldType::Array,
-            "object" => CatalogFieldType::Object,
-            _ => panic!("Unknown field type: {}", self.type_),
-        }
-    }
-
-    pub fn is_required(&self) -> bool {
-        self.required.unwrap_or(false)
-    }
+    List,
 }
