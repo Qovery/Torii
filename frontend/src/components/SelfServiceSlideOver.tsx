@@ -38,7 +38,7 @@ export default function SelfServiceSlideOver({service, onClose}: Props): JSX.Ele
       })
     }
 
-    console.log({data: fields})
+    console.log({payload: fields})
   }
 
   return (

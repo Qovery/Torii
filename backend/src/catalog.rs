@@ -67,6 +67,41 @@ fn consume_job_output_result_from_json_output_env(service_slug: &str) -> JobOutp
     r
 }
 
+fn check_json_payload_against_yaml_config_fields(
+    catalog_slug: &str,
+    service_slug: &str,
+    json_payload: &serde_json::Value,
+    yaml_config: &YamlConfig,
+) -> Result<(), String> {
+    let catalog = match find_catalog_by_slug(&yaml_config.catalogs, catalog_slug) {
+        Some(catalog) => catalog,
+        None => return Err(format!("Catalog '{}' not found", catalog_slug))
+    };
+
+    let service = match find_catalog_service_by_slug(catalog, service_slug) {
+        Some(service) => service,
+        None => return Err(format!("Service '{}' not found", service_slug))
+    };
+
+    let fields = match service.fields.as_ref() {
+        Some(fields) => fields,
+        None => return Err(format!("Service '{}' has no fields", service_slug))
+    };
+
+    for field in fields {
+        let field_value = match json_payload.get(field.slug.as_str()) {
+            Some(field_value) => field_value,
+            None => return Err(format!("Field '{}' not found in payload", field.slug))
+        };
+
+        if field.required.unwrap_or(false) && field_value.is_null() {
+            return Err(format!("Field '{}' is required", field.slug));
+        }
+    }
+
+    Ok(())
+}
+
 #[debug_handler]
 pub async fn list_catalogs(
     Extension(yaml_config): Extension<Arc<YamlConfig>>,
@@ -172,6 +207,19 @@ pub async fn exec_catalog_service_validate_scripts(
     Path((catalog_slug, service_slug)): Path<(String, String)>,
     Json(req): Json<ExecValidateScriptRequest>,
 ) -> (StatusCode, Json<JobResponse>) {
+    let _ = match check_json_payload_against_yaml_config_fields(
+        catalog_slug.as_str(),
+        service_slug.as_str(),
+        &req.payload,
+        &yaml_config,
+    ) {
+        Ok(x) => x,
+        Err(err) => return (StatusCode::BAD_REQUEST, Json(JobResponse {
+            message: Some(err),
+            results: None,
+        }))
+    };
+
     let (_, service) = match get_catalog_and_service(&yaml_config, catalog_slug.as_str(), service_slug.as_str()) {
         Ok((catalog, service)) => (catalog, service),
         Err(err) => return err
@@ -203,6 +251,19 @@ pub async fn exec_catalog_service_post_validate_scripts(
     Path((catalog_slug, service_slug)): Path<(String, String)>,
     Json(req): Json<ExecValidateScriptRequest>,
 ) -> (StatusCode, Json<JobResponse>) {
+    let _ = match check_json_payload_against_yaml_config_fields(
+        catalog_slug.as_str(),
+        service_slug.as_str(),
+        &req.payload,
+        &yaml_config,
+    ) {
+        Ok(x) => x,
+        Err(err) => return (StatusCode::BAD_REQUEST, Json(JobResponse {
+            message: Some(err),
+            results: None,
+        }))
+    };
+
     let (_, service) = match get_catalog_and_service(&yaml_config, catalog_slug.as_str(), service_slug.as_str()) {
         Ok((catalog, service)) => (catalog, service),
         Err(err) => return err
@@ -225,7 +286,7 @@ pub async fn exec_catalog_service_post_validate_scripts(
         let _ = job_results.results.push(job_output_result);
     }
 
-    // TODO output_model
+    // TODO output_model and store results in database
 
     (StatusCode::OK, Json(JobResponse { message: None, results: Some(job_results) }))
 }
@@ -240,6 +301,7 @@ mod tests {
 
     use crate::catalog::{exec_catalog_service_validate_scripts, ExecValidateScriptRequest, find_catalog_by_slug, find_catalog_service_by_slug};
     use crate::yaml_config::{CatalogFieldYamlConfig, CatalogServicePostValidateYamlConfig, CatalogServiceValidateYamlConfig, CatalogServiceYamlConfig, CatalogYamlConfig, YamlConfig};
+    use crate::yaml_config::CatalogFieldType::Text;
 
     #[test]
     fn test_find_catalog_by_slug() {
@@ -274,6 +336,7 @@ mod tests {
                     slug: "service-1".to_string(),
                     name: "Service 1".to_string(),
                     description: None,
+                    icon: None,
                     fields: None,
                     validate: None,
                     post_validate: None,
@@ -282,6 +345,7 @@ mod tests {
                     slug: "service-2".to_string(),
                     name: "Service 2".to_string(),
                     description: None,
+                    icon: None,
                     fields: None,
                     validate: None,
                     post_validate: None,
@@ -306,13 +370,14 @@ mod tests {
                             slug: "service-1".to_string(),
                             name: "Service 1".to_string(),
                             description: None,
+                            icon: None,
                             fields: Some(vec![
                                 CatalogFieldYamlConfig {
                                     slug: "field-1".to_string(),
                                     title: "Field 1".to_string(),
                                     description: None,
                                     placeholder: None,
-                                    type_: "string".to_string(),
+                                    type_: Text,
                                     default: None,
                                     required: Some(true),
                                     autocomplete_fetcher: None,
@@ -322,7 +387,7 @@ mod tests {
                                     title: "Field 2".to_string(),
                                     description: None,
                                     placeholder: None,
-                                    type_: "string".to_string(),
+                                    type_: Text,
                                     default: None,
                                     required: None,
                                     autocomplete_fetcher: None,
