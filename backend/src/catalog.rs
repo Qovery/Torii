@@ -269,11 +269,24 @@ pub async fn exec_catalog_service_post_validate_scripts(
         Err(err) => return err
     };
 
+    // execute validate scripts
+    for v in service.validate.as_ref().unwrap_or(&vec![]) {
+        let _ = match execute_command(service_slug.as_str(), v, req.payload.to_string().as_str()).await {
+            Ok(_) => (),
+            Err(err) => return (StatusCode::BAD_REQUEST, Json(JobResponse {
+                message: Some(err),
+                results: None,
+            }))
+        };
+    }
+
+
     let mut job_results = JobResults {
         user_fields_input: req.payload.clone(),
         results: vec![],
     };
 
+    // execute post validate scripts
     for v in service.post_validate.as_ref().unwrap_or(&vec![]) {
         let job_output_result = match execute_command(service_slug.as_str(), v, req.payload.to_string().as_str()).await {
             Ok(job_output_result) => job_output_result,
