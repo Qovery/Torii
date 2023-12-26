@@ -1,3 +1,1 @@
-
-pub(crate) enum QError {
-}
+pub(crate) enum QError {}

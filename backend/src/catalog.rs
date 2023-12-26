@@ -40,68 +40,6 @@ pub struct JobOutputResult {
     pub output: serde_json::Value,
 }
 
-fn find_catalog_by_slug<'a>(catalogs: &'a Vec<CatalogYamlConfig>, catalog_slug: &str) -> Option<&'a CatalogYamlConfig> {
-    catalogs.iter().find(|catalog| catalog.slug == catalog_slug)
-}
-
-fn find_catalog_service_by_slug<'a>(catalog: &'a CatalogYamlConfig, service_slug: &str) -> Option<&'a CatalogServiceYamlConfig> {
-    catalog.services.as_ref().unwrap().iter().find(|service| service.slug == service_slug)
-}
-
-/// Extract the job output from the environment variable TORII_JSON_OUTPUT and reset it to an empty JSON object
-fn consume_job_output_result_from_json_output_env(service_slug: &str) -> JobOutputResult {
-    let r = match std::env::var("TORII_JSON_OUTPUT") {
-        Ok(json_output) => JobOutputResult {
-            slug: service_slug.to_string(),
-            output: serde_json::from_str(json_output.as_str()).unwrap_or(serde_json::json!({})),
-        },
-        Err(_) => JobOutputResult {
-            slug: service_slug.to_string(),
-            output: serde_json::json!({}),
-        }
-    };
-
-    // reset the environment variable
-    std::env::set_var("TORII_JSON_OUTPUT", "{}");
-
-    r
-}
-
-fn check_json_payload_against_yaml_config_fields(
-    catalog_slug: &str,
-    service_slug: &str,
-    json_payload: &serde_json::Value,
-    yaml_config: &YamlConfig,
-) -> Result<(), String> {
-    let catalog = match find_catalog_by_slug(&yaml_config.catalogs, catalog_slug) {
-        Some(catalog) => catalog,
-        None => return Err(format!("Catalog '{}' not found", catalog_slug))
-    };
-
-    let service = match find_catalog_service_by_slug(catalog, service_slug) {
-        Some(service) => service,
-        None => return Err(format!("Service '{}' not found", service_slug))
-    };
-
-    let fields = match service.fields.as_ref() {
-        Some(fields) => fields,
-        None => return Err(format!("Service '{}' has no fields", service_slug))
-    };
-
-    for field in fields {
-        let field_value = match json_payload.get(field.slug.as_str()) {
-            Some(field_value) => field_value,
-            None => return Err(format!("Field '{}' not found in payload", field.slug))
-        };
-
-        if field.required.unwrap_or(false) && field_value.is_null() {
-            return Err(format!("Field '{}' is required", field.slug));
-        }
-    }
-
-    Ok(())
-}
-
 #[debug_handler]
 pub async fn list_catalogs(
     Extension(yaml_config): Extension<Arc<YamlConfig>>,
@@ -123,82 +61,6 @@ pub async fn list_catalog_services(
     };
 
     (StatusCode::OK, Json(ResultsResponse { message: None, results: catalog.services.clone().unwrap_or(vec![]) }))
-}
-
-async fn execute_command<'a, T>(
-    service_slug: &'a str,
-    external_command: &T,
-    json_payload: &'a str,
-) -> Result<JobOutputResult, String> where T: ExternalCommand {
-    let cmd_one_line = external_command.get_command().join(" ");
-
-    debug!("executing validate script '{}' with payload '{}'", &cmd_one_line, json_payload);
-
-    if external_command.get_command().len() == 1 {
-        return Err(format!("Validate script '{}' is invalid. \
-                Be explicit on the command to execute, e.g. 'python3 examples/validation_script.py'",
-                           external_command.get_command()[0]));
-    }
-
-    let mut cmd = process::Command::new(&external_command.get_command()[0]);
-
-    for arg in external_command.get_command()[1..].iter() {
-        cmd.arg(arg);
-    }
-
-    cmd.arg(json_payload);
-
-    let mut child = match cmd.spawn() {
-        Ok(child) => child,
-        Err(err) => return Err(format!("Validate script '{}' failed: {}", &cmd_one_line, err))
-    };
-
-    let exit_status = match timeout(Duration::from_secs(external_command.get_timeout()), child.wait()).await {
-        Ok(exit_status) => exit_status,
-        Err(_) => return Err(match child.kill().await {
-            Ok(_) => format!(
-                "Validate script '{}' timed out after {} seconds",
-                &cmd_one_line,
-                external_command.get_timeout()
-            ),
-            Err(err) => format!(
-                "Validate script '{}' timed out after {} seconds, but failed to kill the process: {}",
-                &cmd_one_line, external_command.get_timeout(), err
-            )
-        })
-    }.unwrap();
-
-    if !exit_status.success() {
-        return Err(format!("Validate script '{}' failed: {:?}", &cmd_one_line, exit_status));
-    }
-
-    // TODO parse output.stdout and output.stderr and forward to the frontend
-
-    Ok(consume_job_output_result_from_json_output_env(service_slug))
-}
-
-fn get_catalog_and_service<'a>(
-    yaml_config: &'a YamlConfig,
-    catalog_slug: &'a str,
-    service_slug: &'a str,
-) -> Result<(&'a CatalogYamlConfig, &'a CatalogServiceYamlConfig), (StatusCode, Json<JobResponse>)> {
-    let catalog = match find_catalog_by_slug(&yaml_config.catalogs, catalog_slug) {
-        Some(catalog) => catalog,
-        None => return Err((StatusCode::NOT_FOUND, Json(JobResponse {
-            message: Some(format!("Catalog '{}' not found", catalog_slug)),
-            results: None,
-        })))
-    };
-
-    let service = match find_catalog_service_by_slug(catalog, service_slug) {
-        Some(service) => service,
-        None => return Err((StatusCode::NOT_FOUND, Json(JobResponse {
-            message: Some(format!("Service '{}' not found", service_slug)),
-            results: None,
-        })))
-    };
-
-    Ok((catalog, service))
 }
 
 #[debug_handler]
@@ -264,8 +126,8 @@ pub async fn exec_catalog_service_post_validate_scripts(
         }))
     };
 
-    let (_, service) = match get_catalog_and_service(&yaml_config, catalog_slug.as_str(), service_slug.as_str()) {
-        Ok((catalog, service)) => (catalog, service),
+    let service = match get_catalog_and_service(&yaml_config, catalog_slug.as_str(), service_slug.as_str()) {
+        Ok((_, service)) => service,
         Err(err) => return err
     };
 
@@ -281,28 +143,168 @@ pub async fn exec_catalog_service_post_validate_scripts(
     }
 
 
-    let mut job_results = JobResults {
-        user_fields_input: req.payload.clone(),
-        results: vec![],
-    };
-
+    let service = service.clone();
     // execute post validate scripts
-    for v in service.post_validate.as_ref().unwrap_or(&vec![]) {
-        let job_output_result = match execute_command(service_slug.as_str(), v, req.payload.to_string().as_str()).await {
-            Ok(job_output_result) => job_output_result,
-            Err(err) => return (StatusCode::BAD_REQUEST, Json(JobResponse {
-                message: Some(err),
-                results: None,
-            }))
+    let _ = tokio::spawn(async move {
+        let mut job_results = JobResults {
+            user_fields_input: req.payload.clone(),
+            results: vec![],
         };
 
-        let _ = job_results.results.push(job_output_result);
+        for v in service.post_validate.as_ref().unwrap_or(&vec![]) {
+            let job_output_result = match execute_command(service_slug.as_str(), v, req.payload.to_string().as_str()).await {
+                Ok(job_output_result) => job_output_result,
+                Err(err) => todo!("{}", err) // TODO persist error in database
+            };
+
+            let _ = job_results.results.push(job_output_result);
+        }
+
+        // TODO persist results in database
+    });
+
+
+    (StatusCode::NO_CONTENT, Json(JobResponse { message: Some("workflow executed".to_string()), results: None }))
+}
+
+fn find_catalog_by_slug<'a>(catalogs: &'a Vec<CatalogYamlConfig>, catalog_slug: &str) -> Option<&'a CatalogYamlConfig> {
+    catalogs.iter().find(|catalog| catalog.slug == catalog_slug)
+}
+
+fn find_catalog_service_by_slug<'a>(catalog: &'a CatalogYamlConfig, service_slug: &str) -> Option<&'a CatalogServiceYamlConfig> {
+    catalog.services.as_ref().unwrap().iter().find(|service| service.slug == service_slug)
+}
+
+/// Extract the job output from the environment variable TORII_JSON_OUTPUT and reset it to an empty JSON object
+fn consume_job_output_result_from_json_output_env(service_slug: &str) -> JobOutputResult {
+    let job_output_result = match std::env::var("TORII_JSON_OUTPUT") {
+        Ok(json_output) => JobOutputResult {
+            slug: service_slug.to_string(),
+            output: serde_json::from_str(json_output.as_str()).unwrap_or(serde_json::json!({})),
+        },
+        Err(_) => JobOutputResult {
+            slug: service_slug.to_string(),
+            output: serde_json::json!({}),
+        }
+    };
+
+    // reset the environment variable
+    std::env::set_var("TORII_JSON_OUTPUT", "{}");
+
+    job_output_result
+}
+
+fn check_json_payload_against_yaml_config_fields(
+    catalog_slug: &str,
+    service_slug: &str,
+    json_payload: &serde_json::Value,
+    yaml_config: &YamlConfig,
+) -> Result<(), String> {
+    let catalog = match find_catalog_by_slug(&yaml_config.catalogs, catalog_slug) {
+        Some(catalog) => catalog,
+        None => return Err(format!("Catalog '{}' not found", catalog_slug))
+    };
+
+    let service = match find_catalog_service_by_slug(catalog, service_slug) {
+        Some(service) => service,
+        None => return Err(format!("Service '{}' not found", service_slug))
+    };
+
+    let fields = match service.fields.as_ref() {
+        Some(fields) => fields,
+        None => return Err(format!("Service '{}' has no fields", service_slug))
+    };
+
+    for field in fields {
+        let field_value = match json_payload.get(field.slug.as_str()) {
+            Some(field_value) => field_value,
+            None => return Err(format!("Field '{}' not found in payload", field.slug))
+        };
+
+        if field.required.unwrap_or(false) && field_value.is_null() {
+            return Err(format!("Field '{}' is required", field.slug));
+        }
     }
 
-    // TODO output_model and store results in database
-
-    (StatusCode::OK, Json(JobResponse { message: None, results: Some(job_results) }))
+    Ok(())
 }
+
+async fn execute_command<'a, T>(
+    service_slug: &'a str,
+    external_command: &T,
+    json_payload: &'a str,
+) -> Result<JobOutputResult, String> where T: ExternalCommand {
+    let cmd_one_line = external_command.get_command().join(" ");
+
+    debug!("executing validate script '{}' with payload '{}'", &cmd_one_line, json_payload);
+
+    if external_command.get_command().len() == 1 {
+        return Err(format!("Validate script '{}' is invalid. \
+                Be explicit on the command to execute, e.g. 'python3 examples/validation_script.py'",
+                           external_command.get_command()[0]));
+    }
+
+    let mut cmd = process::Command::new(&external_command.get_command()[0]);
+
+    for arg in external_command.get_command()[1..].iter() {
+        cmd.arg(arg);
+    }
+
+    cmd.arg(json_payload);
+
+    let mut child = match cmd.spawn() {
+        Ok(child) => child,
+        Err(err) => return Err(format!("Validate script '{}' failed: {}", &cmd_one_line, err))
+    };
+
+    let exit_status = match timeout(Duration::from_secs(external_command.get_timeout()), child.wait()).await {
+        Ok(exit_status) => exit_status,
+        Err(_) => return Err(match child.kill().await {
+            Ok(_) => format!(
+                "Validate script '{}' timed out after {} seconds",
+                &cmd_one_line,
+                external_command.get_timeout()
+            ),
+            Err(err) => format!(
+                "Validate script '{}' timed out after {} seconds, but failed to kill the process: {}",
+                &cmd_one_line, external_command.get_timeout(), err
+            )
+        })
+    }.unwrap();
+
+    if !exit_status.success() {
+        return Err(format!("Validate script '{}' failed: {:?}", &cmd_one_line, exit_status));
+    }
+
+    // TODO parse output.stdout and output.stderr and forward to the frontend
+
+    Ok(consume_job_output_result_from_json_output_env(service_slug))
+}
+
+fn get_catalog_and_service<'a>(
+    yaml_config: &'a YamlConfig,
+    catalog_slug: &str,
+    service_slug: &str,
+) -> Result<(&'a CatalogYamlConfig, &'a CatalogServiceYamlConfig), (StatusCode, Json<JobResponse>)> {
+    let catalog = match find_catalog_by_slug(&yaml_config.catalogs, catalog_slug) {
+        Some(catalog) => catalog,
+        None => return Err((StatusCode::NOT_FOUND, Json(JobResponse {
+            message: Some(format!("Catalog '{}' not found", catalog_slug)),
+            results: None,
+        })))
+    };
+
+    let service = match find_catalog_service_by_slug(catalog, service_slug) {
+        Some(service) => service,
+        None => return Err((StatusCode::NOT_FOUND, Json(JobResponse {
+            message: Some(format!("Service '{}' not found", service_slug)),
+            results: None,
+        })))
+    };
+
+    Ok((catalog, service))
+}
+
 
 #[cfg(test)]
 mod tests {

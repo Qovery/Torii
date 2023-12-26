@@ -56,7 +56,13 @@ async fn main() {
         }
     };
 
-    // TODO check yaml_config validity - slug, name, description, services, fields, validate
+    match yaml_config.validate() {
+        Ok(_) => {}
+        Err(err) => {
+            error!("failed to validate config file: {}", err);
+            std::process::exit(1);
+        }
+    };
 
     let app = Router::new()
         .fallback(unknown_route)

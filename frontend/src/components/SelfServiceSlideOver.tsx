@@ -4,8 +4,11 @@ import {XMarkIcon} from '@heroicons/react/24/outline'
 import TextField from "@/components/self-service-fields/TextField.tsx";
 import TextareaField from "@/components/self-service-fields/TextareaField.tsx";
 import SwitchField from "@/components/self-service-fields/SwitchField.tsx";
+import {useQuery} from "@tanstack/react-query";
+import {API_URL} from "@/config.ts";
 
 interface Props {
+  catalogSlug: string;
   service: any;
   onClose: () => void;
 }
@@ -25,7 +28,7 @@ function getField(field: any, onChange: (value: any) => void): JSX.Element {
   }
 }
 
-export default function SelfServiceSlideOver({service, onClose}: Props): JSX.Element {
+export default function SelfServiceSlideOver({catalogSlug, service, onClose}: Props): JSX.Element {
 
   const handleSubmit = (event: any) => {
     event.preventDefault()
@@ -39,6 +42,14 @@ export default function SelfServiceSlideOver({service, onClose}: Props): JSX.Ele
     }
 
     console.log({payload: fields})
+
+    useQuery({
+      queryKey: [`${service.slug}-submit`, fields],
+      queryFn: () =>
+        fetch(`${API_URL}/catalogs/${catalogSlug}/services/${service.slug}/execute`).then(
+          (res) => res.json(),
+        ),
+    })
   }
 
   return (
