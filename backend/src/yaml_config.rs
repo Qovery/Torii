@@ -91,31 +91,22 @@ impl CatalogServiceYamlConfig {
 pub trait ExternalCommand {
     fn get_command(&self) -> &Vec<String>;
     fn get_timeout(&self) -> u64;
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
-pub struct CatalogServiceValidateYamlConfig {
-    pub command: Vec<String>,
-    pub timeout: Option<u64>,
-}
-
-impl CatalogServiceValidateYamlConfig {
-    pub fn validate(&self) -> Result<(), String> {
-        if self.command.is_empty() {
+    fn validate(&self) -> Result<(), String> {
+        if self.get_command().is_empty() {
             return Err("command is empty".to_string());
         }
 
         // check if command is valid by checking if the first element (binary) exists and is executable by the current user
-        if self.command.len() > 1 {
-            let command = self.command.get(0).unwrap();
+        if self.get_command().len() >= 1 {
+            let command = self.get_command().get(0).unwrap();
             if !which::which(command).is_ok() {
-                return Err(format!("command {} not found", command));
+                return Err(format!("command '{}' not found", command));
             }
         }
 
         // check if the second element (file) exists and is executable by the current user
-        if self.command.len() > 2 {
-            let file = self.command.get(1).unwrap();
+        if self.get_command().len() >= 2 {
+            let file = self.get_command().get(1).unwrap();
             if !std::path::Path::new(file).exists() {
                 return Err(format!("file '{}' not found", file));
             }
@@ -123,6 +114,13 @@ impl CatalogServiceValidateYamlConfig {
 
         Ok(())
     }
+}
+
+
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+pub struct CatalogServiceValidateYamlConfig {
+    pub command: Vec<String>,
+    pub timeout: Option<u64>,
 }
 
 impl ExternalCommand for CatalogServiceValidateYamlConfig {
@@ -147,32 +145,6 @@ pub struct CatalogServicePostValidateYamlConfig {
     pub command: Vec<String>,
     pub timeout: Option<u64>,
     pub output_model: Option<String>,
-}
-
-impl CatalogServicePostValidateYamlConfig {
-    pub fn validate(&self) -> Result<(), String> {
-        if self.command.is_empty() {
-            return Err("command is empty".to_string());
-        }
-
-        // check if command is valid by checking if the first element (binary) exists and is executable by the current user
-        if self.command.len() > 1 {
-            let command = self.command.get(0).unwrap();
-            if !which::which(command).is_ok() {
-                return Err(format!("command {} not found", command));
-            }
-        }
-
-        // check if the second element (file) exists and is executable by the current user
-        if self.command.len() > 2 {
-            let file = self.command.get(1).unwrap();
-            if !std::path::Path::new(file).exists() {
-                return Err(format!("file '{}' not found", file));
-            }
-        }
-
-        Ok(())
-    }
 }
 
 impl ExternalCommand for CatalogServicePostValidateYamlConfig {

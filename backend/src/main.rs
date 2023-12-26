@@ -64,6 +64,8 @@ async fn main() {
         }
     };
 
+    show_loaded_config(&yaml_config);
+
     let app = Router::new()
         .fallback(unknown_route)
         .route("/", get(|| async { "OK" }))
@@ -82,4 +84,13 @@ async fn main() {
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
+}
+
+fn show_loaded_config(yaml_config: &YamlConfig) {
+    for catalog in &yaml_config.catalogs {
+        info!("-> catalog '{}' loaded", catalog.slug);
+        for service in catalog.services.as_ref().unwrap_or(&vec![]) {
+            info!("\t|-> service '{}' loaded", service.slug);
+        }
+    }
 }
