@@ -36,7 +36,7 @@ pub struct JobResults {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct JobOutputResult {
-    pub slug: String,
+    pub one_liner_command: String,
     pub output: serde_json::Value,
 }
 
@@ -92,8 +92,8 @@ pub async fn exec_catalog_service_validate_scripts(
         results: vec![],
     };
 
-    for v in service.validate.as_ref().unwrap_or(&vec![]) {
-        let job_output_result = match execute_command(service_slug.as_str(), v, req.payload.to_string().as_str()).await {
+    for cmd in service.validate.as_ref().unwrap_or(&vec![]) {
+        let job_output_result = match execute_command(cmd, req.payload.to_string().as_str()).await {
             Ok(job_output_result) => job_output_result,
             Err(err) => return (StatusCode::BAD_REQUEST, Json(JobResponse {
                 message: Some(err),
@@ -132,8 +132,8 @@ pub async fn exec_catalog_service_post_validate_scripts(
     };
 
     // execute validate scripts
-    for v in service.validate.as_ref().unwrap_or(&vec![]) {
-        let _ = match execute_command(service_slug.as_str(), v, req.payload.to_string().as_str()).await {
+    for cmd in service.validate.as_ref().unwrap_or(&vec![]) {
+        let _ = match execute_command(cmd, req.payload.to_string().as_str()).await {
             Ok(_) => (),
             Err(err) => return (StatusCode::BAD_REQUEST, Json(JobResponse {
                 message: Some(err),
@@ -151,8 +151,8 @@ pub async fn exec_catalog_service_post_validate_scripts(
             results: vec![],
         };
 
-        for v in service.post_validate.as_ref().unwrap_or(&vec![]) {
-            let job_output_result = match execute_command(service_slug.as_str(), v, req.payload.to_string().as_str()).await {
+        for cmd in service.post_validate.as_ref().unwrap_or(&vec![]) {
+            let job_output_result = match execute_command(cmd, req.payload.to_string().as_str()).await {
                 Ok(job_output_result) => job_output_result,
                 Err(err) => todo!("{}", err) // TODO persist error in database
             };
@@ -179,11 +179,11 @@ fn find_catalog_service_by_slug<'a>(catalog: &'a CatalogYamlConfig, service_slug
 fn consume_job_output_result_from_json_output_env(service_slug: &str) -> JobOutputResult {
     let job_output_result = match std::env::var("TORII_JSON_OUTPUT") {
         Ok(json_output) => JobOutputResult {
-            slug: service_slug.to_string(),
+            one_liner_command: service_slug.to_string(),
             output: serde_json::from_str(json_output.as_str()).unwrap_or(serde_json::json!({})),
         },
         Err(_) => JobOutputResult {
-            slug: service_slug.to_string(),
+            one_liner_command: service_slug.to_string(),
             output: serde_json::json!({}),
         }
     };
@@ -229,10 +229,9 @@ fn check_json_payload_against_yaml_config_fields(
     Ok(())
 }
 
-async fn execute_command<'a, T>(
-    service_slug: &'a str,
+async fn execute_command<T>(
     external_command: &T,
-    json_payload: &'a str,
+    json_payload: &str,
 ) -> Result<JobOutputResult, String> where T: ExternalCommand {
     let cmd_one_line = external_command.get_command().join(" ");
 
@@ -278,7 +277,7 @@ async fn execute_command<'a, T>(
 
     // TODO parse output.stdout and output.stderr and forward to the frontend
 
-    Ok(consume_job_output_result_from_json_output_env(service_slug))
+    Ok(consume_job_output_result_from_json_output_env(cmd_one_line.as_str()))
 }
 
 fn get_catalog_and_service<'a>(
