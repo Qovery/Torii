@@ -12,15 +12,16 @@ use tracing::log::warn;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
+use crate::catalog::controllers::{exec_catalog_service_post_validate_scripts, exec_catalog_service_validate_scripts, list_catalog_services, list_catalogs};
 use crate::cli::CLI;
 use crate::yaml_config::YamlConfig;
 
 mod yaml_config;
 mod app_config;
-mod catalog;
 mod errors;
 mod cli;
 mod constants;
+mod catalog;
 
 pub async fn unknown_route(uri: Uri) -> (StatusCode, String) {
     let message = format!("unknown route for {uri}");
@@ -70,10 +71,10 @@ async fn main() {
         .fallback(unknown_route)
         .route("/", get(|| async { "OK" }))
         .route("/healthz", get(|| async { "OK" }))
-        .route("/catalogs", get(catalog::list_catalogs))
-        .route("/catalogs/:slug/services", get(catalog::list_catalog_services))
-        .route("/catalogs/:slug/services/:slug/validate", post(catalog::exec_catalog_service_validate_scripts))
-        .route("/catalogs/:slug/services/:slug/execute", post(catalog::exec_catalog_service_post_validate_scripts))
+        .route("/catalogs", get(list_catalogs))
+        .route("/catalogs/:slug/services", get(list_catalog_services))
+        .route("/catalogs/:slug/services/:slug/validate", post(exec_catalog_service_validate_scripts))
+        .route("/catalogs/:slug/services/:slug/execute", post(exec_catalog_service_post_validate_scripts))
         .layer(Extension(yaml_config))
         .layer(CorsLayer::new().allow_origin(Any));
     //.route("/catalog/:id", get(catalog::get_catalog_by_id))
