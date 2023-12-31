@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::constants::DEFAULT_TIMEOUT_IN_SECONDS;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "snake_case")]
 pub struct YamlConfig {
     pub catalogs: Vec<CatalogYamlConfig>,
 }
@@ -20,6 +21,7 @@ impl YamlConfig {
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "snake_case")]
 pub struct CatalogYamlConfig {
     pub slug: String,
     pub name: String,
@@ -44,6 +46,7 @@ impl CatalogYamlConfig {
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "snake_case")]
 pub struct CatalogServiceYamlConfig {
     pub slug: String,
     pub name: String,
@@ -118,6 +121,7 @@ pub trait ExternalCommand {
 
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "snake_case")]
 pub struct CatalogServiceValidateYamlConfig {
     pub command: Vec<String>,
     pub timeout: Option<u64>,
@@ -141,6 +145,7 @@ impl Display for CatalogServiceValidateYamlConfig {
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "snake_case")]
 pub struct CatalogServicePostValidateYamlConfig {
     pub command: Vec<String>,
     pub timeout: Option<u64>,
@@ -165,6 +170,7 @@ impl Display for CatalogServicePostValidateYamlConfig {
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "snake_case")]
 pub struct CatalogFieldYamlConfig {
     pub slug: String,
     pub title: String,

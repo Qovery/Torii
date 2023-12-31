@@ -13,6 +13,7 @@ use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
 use crate::catalog::controllers::{exec_catalog_service_post_validate_scripts, exec_catalog_service_validate_scripts, list_catalog_services, list_catalogs};
+use crate::catalog::services::BackgroundWorkerTask;
 use crate::cli::CLI;
 use crate::yaml_config::YamlConfig;
 
@@ -67,6 +68,12 @@ async fn main() {
 
     show_loaded_config(&yaml_config);
 
+    let (tx, rx) = tokio::sync::mpsc::channel::<BackgroundWorkerTask>(100);
+
+    let _ = tokio::spawn(async move {
+        catalog::services::background_worker(rx).await;
+    });
+
     let app = Router::new()
         .fallback(unknown_route)
         .route("/", get(|| async { "OK" }))
@@ -76,6 +83,7 @@ async fn main() {
         .route("/catalogs/:slug/services/:slug/validate", post(exec_catalog_service_validate_scripts))
         .route("/catalogs/:slug/services/:slug/execute", post(exec_catalog_service_post_validate_scripts))
         .layer(Extension(yaml_config))
+        .layer(Extension(tx))
         .layer(CorsLayer::new().allow_origin(Any));
     //.route("/catalog/:id", get(catalog::get_catalog_by_id))
     //.route("/catalog", post(catalog::create_catalog));

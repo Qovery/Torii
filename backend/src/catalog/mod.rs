@@ -10,6 +10,7 @@ use tracing::debug;
 use crate::yaml_config::{CatalogServiceYamlConfig, CatalogYamlConfig, ExternalCommand, YamlConfig};
 
 pub mod controllers;
+pub mod services;
 
 #[derive(Serialize, Deserialize)]
 pub struct ResultsResponse<T> {

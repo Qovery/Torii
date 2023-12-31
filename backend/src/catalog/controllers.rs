@@ -3,8 +3,11 @@ use std::sync::Arc;
 use axum::{debug_handler, Extension, Json};
 use axum::extract::Path;
 use axum::http::StatusCode;
+use tokio::sync::mpsc::Sender;
+use tracing::error;
 
 use crate::catalog::{check_json_payload_against_yaml_config_fields, execute_command, ExecValidateScriptRequest, find_catalog_by_slug, get_catalog_and_service, JobResponse, JobResults, ResultsResponse};
+use crate::catalog::services::BackgroundWorkerTask;
 use crate::yaml_config::{CatalogServiceYamlConfig, CatalogYamlConfig, ExternalCommand, YamlConfig};
 
 #[debug_handler]
@@ -77,6 +80,7 @@ pub async fn exec_catalog_service_validate_scripts(
 #[debug_handler]
 pub async fn exec_catalog_service_post_validate_scripts(
     Extension(yaml_config): Extension<Arc<YamlConfig>>,
+    Extension(tx): Extension<Sender<BackgroundWorkerTask>>,
     Path((catalog_slug, service_slug)): Path<(String, String)>,
     Json(req): Json<ExecValidateScriptRequest>,
 ) -> (StatusCode, Json<JobResponse>) {
@@ -109,27 +113,14 @@ pub async fn exec_catalog_service_post_validate_scripts(
         };
     }
 
-
-    let service = service.clone();
     // execute post validate scripts
-    let _ = tokio::spawn(async move {
-        let mut job_results = JobResults {
-            user_fields_input: req.payload.clone(),
-            results: vec![],
-        };
-
-        for cmd in service.post_validate.as_ref().unwrap_or(&vec![]) {
-            let job_output_result = match execute_command(cmd, req.payload.to_string().as_str()).await {
-                Ok(job_output_result) => job_output_result,
-                Err(err) => todo!("{}", err) // TODO persist error in database
-            };
-
-            let _ = job_results.results.push(job_output_result);
-        }
-
-        // TODO persist results in database
+    let _ = tx.send(BackgroundWorkerTask::new(
+        catalog_slug.clone(),
+        service.clone(),
+        req,
+    )).await.unwrap_or_else(|err| {
+        error!("failed to send task to background worker: {}", err);
     });
-
 
     (StatusCode::NO_CONTENT, Json(JobResponse { message: Some("workflow executed".to_string()), results: None }))
 }

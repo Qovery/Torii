@@ -38,16 +38,16 @@ catalogs:
           - command:
               - bash
               - examples/dumb_script_ok.sh # AND then this one
-        post-validation:
+        post_validate:
           - command:
               - python
               - examples/validation_script_ok.py # executed first
             timeout: 60 # timeout in seconds
-            output-model: string (optional) # model name
+            output_model: string (optional) # model name
           - command:
               - bash
               - examples/dumb_script_ok.sh # AND then this one
-            output-model: string (optional) # model name
+            output_model: string (optional) # model name
       - slug: stop-testing-environment
         name: Stop Testing Environment
         description: stop a testing environment
@@ -68,16 +68,16 @@ catalogs:
           - command:
               - bash
               - examples/dumb_script_ok.sh # AND then this one
-        post-validation:
+        post_validate:
           - command:
               - python
               - examples/validation_script_ok.py # executed first
             timeout: 60 # timeout in seconds
-            output-model: string (optional) # model name
+            output_model: string (optional) # model name
           - command:
               - bash
               - examples/dumb_script_ok.sh # AND then this one
-            output-model: string (optional) # model name
+            output_model: string (optional) # model name
 models:
   - name: string
     description: string (optional)
