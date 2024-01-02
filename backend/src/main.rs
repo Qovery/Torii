@@ -66,13 +66,31 @@ async fn main() {
         }
     };
 
-    show_loaded_config(&yaml_config);
+    let (client, connect) = tokio_postgres::connect(
+        format!(
+            "host={} port={} user={} password={} dbname={}",
+            env::var("DB_HOST").unwrap_or_else(|_| "localhost".to_string()),
+            env::var("DB_PORT").unwrap_or_else(|_| "5432".to_string()),
+            env::var("DB_USER").unwrap_or_else(|_| "postgres".to_string()),
+            env::var("DB_PASSWORD").unwrap_or_else(|_| "postgres".to_string()),
+            env::var("DB_NAME").unwrap_or_else(|_| "qovery_portal".to_string()),
+        ).as_str(),
+        tokio_postgres::NoTls,
+    ).await.unwrap_or_else(|err| {
+        error!("failed to connect to database: {}", err);
+        std::process::exit(1);
+    });
+
+    let client = Arc::new(client);
+    let bgw_client = client.clone();
 
     let (tx, rx) = tokio::sync::mpsc::channel::<BackgroundWorkerTask>(100);
 
     let _ = tokio::spawn(async move {
-        catalog::services::background_worker(rx).await;
+        catalog::services::background_worker(rx, bgw_client).await;
     });
+
+    show_loaded_config(&yaml_config);
 
     let app = Router::new()
         .fallback(unknown_route)
@@ -84,6 +102,7 @@ async fn main() {
         .route("/catalogs/:slug/services/:slug/execute", post(exec_catalog_service_post_validate_scripts))
         .layer(Extension(yaml_config))
         .layer(Extension(tx))
+        .layer(Extension(client))
         .layer(CorsLayer::new().allow_origin(Any));
     //.route("/catalog/:id", get(catalog::get_catalog_by_id))
     //.route("/catalog", post(catalog::create_catalog));
