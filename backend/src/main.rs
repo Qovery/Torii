@@ -15,6 +15,7 @@ use tracing_subscriber::util::SubscriberInitExt;
 use crate::catalog::controllers::{exec_catalog_service_post_validate_scripts, exec_catalog_service_validate_scripts, list_catalog_services, list_catalogs};
 use crate::catalog::services::BackgroundWorkerTask;
 use crate::cli::CLI;
+use crate::database::init_database;
 use crate::yaml_config::YamlConfig;
 
 mod yaml_config;
@@ -23,6 +24,7 @@ mod errors;
 mod cli;
 mod constants;
 mod catalog;
+mod database;
 
 pub async fn unknown_route(uri: Uri) -> (StatusCode, String) {
     let message = format!("unknown route for {uri}");
@@ -66,20 +68,36 @@ async fn main() {
         }
     };
 
-    let (client, connect) = tokio_postgres::connect(
+    let (client, connection) = tokio_postgres::connect(
         format!(
             "host={} port={} user={} password={} dbname={}",
             env::var("DB_HOST").unwrap_or_else(|_| "localhost".to_string()),
             env::var("DB_PORT").unwrap_or_else(|_| "5432".to_string()),
             env::var("DB_USER").unwrap_or_else(|_| "postgres".to_string()),
             env::var("DB_PASSWORD").unwrap_or_else(|_| "postgres".to_string()),
-            env::var("DB_NAME").unwrap_or_else(|_| "qovery_portal".to_string()),
+            env::var("DB_NAME").unwrap_or_else(|_| "torii".to_string()),
         ).as_str(),
         tokio_postgres::NoTls,
     ).await.unwrap_or_else(|err| {
         error!("failed to connect to database: {}", err);
         std::process::exit(1);
     });
+
+    // The connection object performs the actual communication with the database,
+    // so spawn it off to run on its own.
+    tokio::spawn(async move {
+        if let Err(e) = connection.await {
+            // TODO handle connection error
+            error!("connection error: {}", e);
+        }
+    });
+
+    init_database(&client).await.unwrap_or_else(|err| {
+        error!("failed to initialize database: {:?}", err);
+        std::process::exit(1);
+    });
+
+    info!("database initialized and up to date");
 
     let client = Arc::new(client);
     let bgw_client = client.clone();
