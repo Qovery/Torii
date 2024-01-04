@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
+use sqlx::{Pool, Postgres};
 use tokio::sync::mpsc::Receiver;
-use tokio_postgres::Client;
 
 use crate::catalog::{execute_command, ExecValidateScriptRequest, JobResults};
 use crate::yaml_config::CatalogServiceYamlConfig;
@@ -28,7 +28,7 @@ impl BackgroundWorkerTask {
     }
 }
 
-pub async fn background_worker(mut rx: Receiver<BackgroundWorkerTask>, pg_client: Arc<Client>) {
+pub async fn background_worker(mut rx: Receiver<BackgroundWorkerTask>, pg_pool: Arc<Pool<Postgres>>) {
     while let Some(task) = rx.recv().await {
         let mut job_results = JobResults {
             user_fields_input: task.req.payload.clone(),

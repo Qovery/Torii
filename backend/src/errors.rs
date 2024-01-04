@@ -2,11 +2,11 @@ use crate::errors::QError::PostgresError;
 
 #[derive(Debug)]
 pub enum QError {
-    PostgresError(tokio_postgres::Error),
+    PostgresError(sqlx::Error),
 }
 
-impl From<tokio_postgres::Error> for QError {
-    fn from(pg_error: tokio_postgres::Error) -> Self {
-        PostgresError(pg_error)
+impl From<sqlx::Error> for QError {
+    fn from(err: sqlx::Error) -> Self {
+        PostgresError(err)
     }
 }

@@ -6,6 +6,7 @@ use axum::{Extension, Router};
 use axum::http::{StatusCode, Uri};
 use axum::routing::{get, post};
 use clap::Parser;
+use sqlx::postgres::PgPoolOptions;
 use tower_http::cors::{Any, CorsLayer};
 use tracing::{error, info};
 use tracing::log::warn;
@@ -68,39 +69,28 @@ async fn main() {
         }
     };
 
-    let (client, connection) = tokio_postgres::connect(
-        format!(
-            "host={} port={} user={} password={} dbname={}",
-            env::var("DB_HOST").unwrap_or_else(|_| "localhost".to_string()),
-            env::var("DB_PORT").unwrap_or_else(|_| "5432".to_string()),
-            env::var("DB_USER").unwrap_or_else(|_| "postgres".to_string()),
-            env::var("DB_PASSWORD").unwrap_or_else(|_| "postgres".to_string()),
-            env::var("DB_NAME").unwrap_or_else(|_| "torii".to_string()),
-        ).as_str(),
-        tokio_postgres::NoTls,
-    ).await.unwrap_or_else(|err| {
-        error!("failed to connect to database: {}", err);
-        std::process::exit(1);
-    });
+    let connection_string = env::var("DB_CONNECTION_URL")
+        .unwrap_or("postgres://postgres:postgres@localhost:5432/torii".to_string());
 
-    // The connection object performs the actual communication with the database,
-    // so spawn it off to run on its own.
-    tokio::spawn(async move {
-        if let Err(e) = connection.await {
-            // TODO handle connection error
-            error!("connection error: {}", e);
+    let pg_pool = match PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&connection_string).await {
+        Ok(pool) => pool,
+        Err(err) => {
+            error!("failed to connect to database: {}", err);
+            std::process::exit(1);
         }
-    });
+    };
 
-    init_database(&client).await.unwrap_or_else(|err| {
+    init_database(&pg_pool).await.unwrap_or_else(|err| {
         error!("failed to initialize database: {:?}", err);
         std::process::exit(1);
     });
 
     info!("database initialized and up to date");
 
-    let client = Arc::new(client);
-    let bgw_client = client.clone();
+    let pg_pool = Arc::new(pg_pool);
+    let bgw_client = pg_pool.clone();
 
     let (tx, rx) = tokio::sync::mpsc::channel::<BackgroundWorkerTask>(100);
 
@@ -120,7 +110,7 @@ async fn main() {
         .route("/catalogs/:slug/services/:slug/execute", post(exec_catalog_service_post_validate_scripts))
         .layer(Extension(yaml_config))
         .layer(Extension(tx))
-        .layer(Extension(client))
+        .layer(Extension(pg_pool))
         .layer(CorsLayer::new().allow_origin(Any));
     //.route("/catalog/:id", get(catalog::get_catalog_by_id))
     //.route("/catalog", post(catalog::create_catalog));
