@@ -9,19 +9,19 @@ use crate::yaml_config::CatalogServiceYamlConfig;
 
 #[derive(Serialize, Deserialize)]
 pub struct BackgroundWorkerTask {
-    pub catalog_slug: String,
+    pub catalog_execution_status_id: String,
     pub catalog_service_yaml_config: CatalogServiceYamlConfig,
     pub req: ExecValidateScriptRequest,
 }
 
 impl BackgroundWorkerTask {
     pub fn new(
-        catalog_slug: String,
+        catalog_execution_status_id: String,
         catalog_service_yaml_config: CatalogServiceYamlConfig,
         req: ExecValidateScriptRequest,
     ) -> Self {
         Self {
-            catalog_slug,
+            catalog_execution_status_id,
             catalog_service_yaml_config,
             req,
         }
@@ -43,9 +43,5 @@ pub async fn background_worker(mut rx: Receiver<BackgroundWorkerTask>, pg_pool: 
 
             let _ = job_results.results.push(job_output_result);
         }
-
-        println!("job_results: {:?}", job_results);
-
-        // TODO persist results in database
     }
 }

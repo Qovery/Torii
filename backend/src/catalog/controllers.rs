@@ -9,7 +9,7 @@ use tracing::error;
 use crate::catalog::{check_json_payload_against_yaml_config_fields, execute_command, ExecValidateScriptRequest, find_catalog_by_slug, get_catalog_and_service, JobResponse, JobResults, ResultsResponse};
 use crate::catalog::services::BackgroundWorkerTask;
 use crate::database;
-use crate::database::CatalogExecutionStatusJson;
+use crate::database::{CatalogExecutionStatusJson, insert_catalog_execution_status, Status};
 use crate::yaml_config::{CatalogServiceYamlConfig, CatalogYamlConfig, ExternalCommand, YamlConfig};
 
 #[debug_handler]
@@ -99,6 +99,7 @@ pub async fn exec_catalog_service_validate_scripts(
 pub async fn exec_catalog_service_post_validate_scripts(
     Extension(yaml_config): Extension<Arc<YamlConfig>>,
     Extension(tx): Extension<Sender<BackgroundWorkerTask>>,
+    Extension(pg_pool): Extension<Arc<sqlx::PgPool>>,
     Path((catalog_slug, service_slug)): Path<(String, String)>,
     Json(req): Json<ExecValidateScriptRequest>,
 ) -> (StatusCode, Json<JobResponse>) {
@@ -131,13 +132,29 @@ pub async fn exec_catalog_service_post_validate_scripts(
         };
     }
 
+    let ces = match insert_catalog_execution_status(
+        &pg_pool,
+        &catalog_slug,
+        &service_slug,
+        Status::Queued,
+        &req.payload,
+        &serde_json::Value::Object(serde_json::Map::new()),
+    ).await {
+        Ok(ces) => ces,
+        Err(err) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(JobResponse {
+            message: Some(err.to_string()),
+            results: None,
+        }))
+    };
+
     // execute post validate scripts
     let _ = tx.send(BackgroundWorkerTask::new(
-        catalog_slug.clone(),
+        ces.id(),
         service.clone(),
         req,
     )).await.unwrap_or_else(|err| {
         error!("failed to send task to background worker: {}", err);
+        // TODO change catalog execution status to Failure
     });
 
     (StatusCode::NO_CONTENT, Json(JobResponse { message: Some("workflow executed".to_string()), results: None }))

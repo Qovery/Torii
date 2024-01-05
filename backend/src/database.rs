@@ -40,6 +40,10 @@ impl CatalogExecutionStatus {
             tasks_payload: self.tasks_payload.clone(),
         }
     }
+
+    pub fn id(&self) -> String {
+        self.id.to_string()
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -65,7 +69,11 @@ pub async fn init_database(pg_pool: &Pool<Postgres>) -> Result<(), QError> {
     Ok(())
 }
 
-pub async fn list_catalog_execution_statuses(pg_pool: &Pool<Postgres>, catalog_slug: &str, service_slug: &str) -> Result<Vec<CatalogExecutionStatus>, QError> {
+pub async fn list_catalog_execution_statuses(
+    pg_pool: &Pool<Postgres>,
+    catalog_slug: &str,
+    service_slug: &str,
+) -> Result<Vec<CatalogExecutionStatus>, QError> {
     Ok(
         sqlx::query_as::<_, CatalogExecutionStatus>(
             r#"
@@ -77,6 +85,32 @@ pub async fn list_catalog_execution_statuses(pg_pool: &Pool<Postgres>, catalog_s
             .bind(catalog_slug)
             .bind(service_slug)
             .fetch_all(pg_pool)
+            .await?
+    )
+}
+
+pub async fn insert_catalog_execution_status(
+    pg_pool: &Pool<Postgres>,
+    catalog_slug: &str,
+    service_slug: &str,
+    status: Status,
+    input_payload: &serde_json::Value,
+    tasks_payload: &serde_json::Value,
+) -> Result<CatalogExecutionStatus, QError> {
+    Ok(
+        sqlx::query_as::<_, CatalogExecutionStatus>(
+            r#"
+            INSERT INTO catalog_execution_statuses (catalog_slug, service_slug, status, input_payload, tasks_payload)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING *
+        "#
+        )
+            .bind(catalog_slug)
+            .bind(service_slug)
+            .bind(status)
+            .bind(input_payload)
+            .bind(tasks_payload)
+            .fetch_one(pg_pool)
             .await?
     )
 }
