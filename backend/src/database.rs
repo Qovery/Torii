@@ -15,11 +15,13 @@ pub struct CatalogExecutionStatus {
 
 #[derive(sqlx::Type, Clone, Serialize, Deserialize, Debug)]
 #[sqlx(rename_all = "SCREAMING_SNAKE_CASE")]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum Status {
+    // update schema.sql when adding new status
     Queued,
     Running,
     Success,
-    Failed,
+    Failure,
 }
 
 impl CatalogExecutionStatus {
