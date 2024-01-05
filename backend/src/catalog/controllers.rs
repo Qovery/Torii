@@ -8,6 +8,8 @@ use tracing::error;
 
 use crate::catalog::{check_json_payload_against_yaml_config_fields, execute_command, ExecValidateScriptRequest, find_catalog_by_slug, get_catalog_and_service, JobResponse, JobResults, ResultsResponse};
 use crate::catalog::services::BackgroundWorkerTask;
+use crate::database;
+use crate::database::CatalogExecutionStatusJson;
 use crate::yaml_config::{CatalogServiceYamlConfig, CatalogYamlConfig, ExternalCommand, YamlConfig};
 
 #[debug_handler]
@@ -31,6 +33,21 @@ pub async fn list_catalog_services(
     };
 
     (StatusCode::OK, Json(ResultsResponse { message: None, results: catalog.services.clone().unwrap_or(vec![]) }))
+}
+
+#[debug_handler]
+pub async fn list_catalog_execution_statuses(
+    Extension(pg_pool): Extension<Arc<sqlx::PgPool>>,
+) -> (StatusCode, Json<ResultsResponse<CatalogExecutionStatusJson>>) {
+    match database::list_catalog_execution_statuses(&pg_pool).await {
+        Ok(catalog_execution_statuses) => {
+            (StatusCode::OK, Json(ResultsResponse { message: None, results: catalog_execution_statuses.iter().map(|x| x.to_json()).collect() }))
+        }
+        Err(err) => {
+            error!("failed to list catalog execution statuses: {:?}", err);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(ResultsResponse { message: Some(err.to_string()), results: vec![] }))
+        }
+    }
 }
 
 #[debug_handler]
