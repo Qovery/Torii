@@ -9,8 +9,11 @@ pub struct CatalogExecutionStatus {
     id: Uuid,
     created_at: chrono::NaiveDateTime,
     updated_at: chrono::NaiveDateTime,
+    catalog_slug: String,
+    service_slug: String,
     status: Status,
     input_payload: serde_json::Value,
+    tasks_payload: serde_json::Value,
 }
 
 #[derive(sqlx::Type, Clone, Serialize, Deserialize, Debug)]
@@ -30,8 +33,11 @@ impl CatalogExecutionStatus {
             id: self.id.to_string(),
             created_at: self.created_at.to_string(),
             updated_at: self.updated_at.to_string(),
+            catalog_slug: self.catalog_slug.clone(),
+            service_slug: self.service_slug.clone(),
             status: self.status.clone(),
             input_payload: self.input_payload.clone(),
+            tasks_payload: self.tasks_payload.clone(),
         }
     }
 }
@@ -41,8 +47,11 @@ pub struct CatalogExecutionStatusJson {
     pub id: String,
     pub created_at: String,
     pub updated_at: String,
+    pub catalog_slug: String,
+    pub service_slug: String,
     pub status: Status,
     pub input_payload: serde_json::Value,
+    pub tasks_payload: serde_json::Value,
 }
 
 /// Initialize the database by creating the tables
@@ -56,11 +65,18 @@ pub async fn init_database(pg_pool: &Pool<Postgres>) -> Result<(), QError> {
     Ok(())
 }
 
-pub async fn list_catalog_execution_statuses(pg_pool: &Pool<Postgres>) -> Result<Vec<CatalogExecutionStatus>, QError> {
-    Ok(sqlx::query_as::<_, CatalogExecutionStatus>(
-        r#"
+pub async fn list_catalog_execution_statuses(pg_pool: &Pool<Postgres>, catalog_slug: &str, service_slug: &str) -> Result<Vec<CatalogExecutionStatus>, QError> {
+    Ok(
+        sqlx::query_as::<_, CatalogExecutionStatus>(
+            r#"
             SELECT *
             FROM catalog_execution_statuses
+            WHERE catalog_slug = $1 AND service_slug = $2
         "#
-    ).fetch_all(pg_pool).await?)
+        )
+            .bind(catalog_slug)
+            .bind(service_slug)
+            .fetch_all(pg_pool)
+            .await?
+    )
 }

@@ -38,8 +38,9 @@ pub async fn list_catalog_services(
 #[debug_handler]
 pub async fn list_catalog_execution_statuses(
     Extension(pg_pool): Extension<Arc<sqlx::PgPool>>,
+    Path((catalog_slug, service_slug)): Path<(String, String)>,
 ) -> (StatusCode, Json<ResultsResponse<CatalogExecutionStatusJson>>) {
-    match database::list_catalog_execution_statuses(&pg_pool).await {
+    match database::list_catalog_execution_statuses(&pg_pool, &catalog_slug, &service_slug).await {
         Ok(catalog_execution_statuses) => {
             (StatusCode::OK, Json(ResultsResponse { message: None, results: catalog_execution_statuses.iter().map(|x| x.to_json()).collect() }))
         }
