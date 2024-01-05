@@ -6,11 +6,11 @@ use axum::http::StatusCode;
 use tokio::sync::mpsc::Sender;
 use tracing::error;
 
-use crate::catalog::{check_json_payload_against_yaml_config_fields, execute_command, ExecValidateScriptRequest, find_catalog_by_slug, get_catalog_and_service, JobResponse, JobResults, ResultsResponse};
+use crate::catalog::{check_json_payload_against_yaml_config_fields, execute_command, ExecValidateScriptRequest, find_catalog_by_slug, get_catalog_and_service, JobResponse, ResultsResponse};
 use crate::catalog::services::BackgroundWorkerTask;
 use crate::database;
 use crate::database::{CatalogExecutionStatusJson, insert_catalog_execution_status, Status};
-use crate::yaml_config::{CatalogServiceYamlConfig, CatalogYamlConfig, ExternalCommand, YamlConfig};
+use crate::yaml_config::{CatalogServiceYamlConfig, CatalogYamlConfig, YamlConfig};
 
 #[debug_handler]
 pub async fn list_catalogs(
@@ -66,7 +66,6 @@ pub async fn exec_catalog_service_validate_scripts(
         Ok(x) => x,
         Err(err) => return (StatusCode::BAD_REQUEST, Json(JobResponse {
             message: Some(err),
-            results: None,
         }))
     };
 
@@ -75,24 +74,16 @@ pub async fn exec_catalog_service_validate_scripts(
         Err(err) => return err
     };
 
-    let mut job_results = JobResults {
-        user_fields_input: req.payload.clone(),
-        results: vec![],
-    };
-
     for cmd in service.validate.as_ref().unwrap_or(&vec![]) {
-        let job_output_result = match execute_command(cmd, req.payload.to_string().as_str()).await {
-            Ok(job_output_result) => job_output_result,
+        let _ = match execute_command(cmd, req.payload.to_string().as_str()).await {
+            Ok(_) => (),
             Err(err) => return (StatusCode::BAD_REQUEST, Json(JobResponse {
                 message: Some(err),
-                results: None,
             }))
         };
-
-        let _ = job_results.results.push(job_output_result);
     }
 
-    (StatusCode::OK, Json(JobResponse { message: None, results: Some(job_results) }))
+    (StatusCode::OK, Json(JobResponse { message: None }))
 }
 
 #[debug_handler]
@@ -112,7 +103,6 @@ pub async fn exec_catalog_service_post_validate_scripts(
         Ok(x) => x,
         Err(err) => return (StatusCode::BAD_REQUEST, Json(JobResponse {
             message: Some(err),
-            results: None,
         }))
     };
 
@@ -127,7 +117,6 @@ pub async fn exec_catalog_service_post_validate_scripts(
             Ok(_) => (),
             Err(err) => return (StatusCode::BAD_REQUEST, Json(JobResponse {
                 message: Some(err),
-                results: None,
             }))
         };
     }
@@ -143,7 +132,6 @@ pub async fn exec_catalog_service_post_validate_scripts(
         Ok(ces) => ces,
         Err(err) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(JobResponse {
             message: Some(err.to_string()),
-            results: None,
         }))
     };
 
@@ -157,7 +145,7 @@ pub async fn exec_catalog_service_post_validate_scripts(
         // TODO change catalog execution status to Failure
     });
 
-    (StatusCode::NO_CONTENT, Json(JobResponse { message: Some("workflow executed".to_string()), results: None }))
+    (StatusCode::NO_CONTENT, Json(JobResponse { message: Some("workflow executed".to_string()) }))
 }
 
 #[cfg(test)]
@@ -251,8 +239,6 @@ mod tests {
 
         assert_eq!(status_code, StatusCode::OK);
         assert_eq!(job_response.message, None);
-
-        assert_eq!(job_response.results.as_ref().unwrap().results.len() > 0, true);
     }
 
     #[tokio::test]
@@ -281,7 +267,6 @@ mod tests {
 
         assert_eq!(status_code, StatusCode::BAD_REQUEST);
         assert_eq!(job_response.message.as_ref().unwrap().is_empty(), false);
-        assert_eq!(job_response.results.as_ref(), None);
     }
 
     #[tokio::test]

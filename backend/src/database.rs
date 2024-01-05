@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use serde::{Deserialize, Serialize};
 use sqlx::{Executor, Pool, Postgres};
 use sqlx::types::Uuid;
@@ -110,6 +112,29 @@ pub async fn insert_catalog_execution_status(
             .bind(status)
             .bind(input_payload)
             .bind(tasks_payload)
+            .fetch_one(pg_pool)
+            .await?
+    )
+}
+
+pub async fn update_catalog_execution_status(
+    pg_pool: &Pool<Postgres>,
+    id: &str,
+    status: Status,
+    tasks_payload: &serde_json::Value,
+) -> Result<CatalogExecutionStatus, QError> {
+    Ok(
+        sqlx::query_as::<_, CatalogExecutionStatus>(
+            r#"
+            UPDATE catalog_execution_statuses
+            SET status = $1, tasks_payload = $2
+            WHERE id = $3
+            RETURNING *
+        "#
+        )
+            .bind(status)
+            .bind(tasks_payload)
+            .bind(Uuid::from_str(id).unwrap())
             .fetch_one(pg_pool)
             .await?
     )

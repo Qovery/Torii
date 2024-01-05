@@ -21,18 +21,11 @@ pub struct ResultsResponse<T> {
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct JobResponse {
     message: Option<String>,
-    results: Option<JobResults>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct ExecValidateScriptRequest {
     payload: serde_json::Value,
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
-pub struct JobResults {
-    pub user_fields_input: serde_json::Value,
-    pub results: Vec<JobOutputResult>,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -163,7 +156,6 @@ fn get_catalog_and_service<'a>(
         Some(catalog) => catalog,
         None => return Err((StatusCode::NOT_FOUND, Json(JobResponse {
             message: Some(format!("Catalog '{}' not found", catalog_slug)),
-            results: None,
         })))
     };
 
@@ -171,7 +163,6 @@ fn get_catalog_and_service<'a>(
         Some(service) => service,
         None => return Err((StatusCode::NOT_FOUND, Json(JobResponse {
             message: Some(format!("Service '{}' not found", service_slug)),
-            results: None,
         })))
     };
 
