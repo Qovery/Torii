@@ -67,7 +67,6 @@ pub async fn list_catalog_runs_by_catalog_slug(
     }
 }
 
-
 #[debug_handler]
 pub async fn exec_catalog_service_validate_scripts(
     Extension(yaml_config): Extension<Arc<YamlConfig>>,

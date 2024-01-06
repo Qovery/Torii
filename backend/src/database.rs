@@ -82,6 +82,7 @@ pub async fn list_catalog_runs_by_catalog_and_service_slugs(
             SELECT *
             FROM catalog_runs
             WHERE catalog_slug = $1 AND service_slug = $2
+            ORDER BY created_at DESC
         "#
         )
             .bind(catalog_slug)
@@ -101,6 +102,7 @@ pub async fn list_catalog_runs_by_catalog_slug(
             SELECT *
             FROM catalog_runs
             WHERE catalog_slug = $1
+            ORDER BY created_at DESC
         "#
         )
             .bind(catalog_slug)
