@@ -4,7 +4,7 @@ import {Bars3Icon, BeakerIcon, ChevronRightIcon, ClipboardIcon, HomeIcon, Shield
 import {classNames} from "@/lib/utils.ts";
 import {useQuery} from "@tanstack/react-query";
 import {API_URL} from "@/config.ts";
-import SelfService from "@/components/SelfService.tsx";
+import SelfService from "@/components/self-service/SelfService.tsx";
 
 class NavigationItem {
   name: string
@@ -141,7 +141,7 @@ export default function AppShell() {
                       {/*  src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"*/}
                       {/*  alt="Your Company"*/}
                       {/*/>*/}
-                      <h1 className="text-2xl font-semibold text-gray-900">Torii</h1>
+                      <h1 className="text-2xl font-semibold text-gray-900">Torii ⛩️</h1>
                     </div>
                     <nav className="flex flex-1 flex-col">
                       <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -169,7 +169,7 @@ export default function AppShell() {
               {/*  src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"*/}
               {/*  alt="Your Company"*/}
               {/*/>*/}
-              <h1 className="text-2xl font-semibold text-gray-900">Torii</h1>
+              <h1 className="text-2xl font-semibold text-gray-900">Torii ⛩️</h1>
             </div>
             <nav className="flex flex-1 flex-col">
               <ul role="list" className="flex flex-1 flex-col gap-y-7">

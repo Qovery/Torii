@@ -1,9 +1,9 @@
 import {Fragment} from 'react'
 import {Dialog, Transition} from '@headlessui/react'
 import {XMarkIcon} from '@heroicons/react/24/outline'
-import TextField from "@/components/self-service-fields/TextField.tsx";
-import TextareaField from "@/components/self-service-fields/TextareaField.tsx";
-import SwitchField from "@/components/self-service-fields/SwitchField.tsx";
+import TextField from "@/components/self-service/fields/TextField.tsx";
+import TextareaField from "@/components/self-service/fields/TextareaField.tsx";
+import SwitchField from "@/components/self-service/fields/SwitchField.tsx";
 import {useQuery} from "@tanstack/react-query";
 import {API_URL} from "@/config.ts";
 

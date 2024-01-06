@@ -1,4 +1,8 @@
 catalogs:
+  - slug: empty-catalog
+    name: Empty Catalog
+    description: Empty catalog
+    services: [ ]
   - slug: default
     name: Default
     description: Default catalog
