@@ -1,4 +1,4 @@
-FROM rust:1.74.0-alpine3.18 as builder
+FROM rust:1.75.0-alpine3.18 as builder
 
 WORKDIR /app
 
@@ -6,7 +6,7 @@ COPY . .
 
 # Natively the compilation fails. We need this
 # source: https://github.com/ocaml/opam-repository/issues/13718#issuecomment-475550590
-RUN apk add --no-cache musl-dev
+RUN apk add --no-cache musl-dev pkgconfig libressl-dev
 
 RUN cargo build --release
 
