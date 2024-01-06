@@ -97,12 +97,12 @@ pub async fn insert_catalog_execution_status(
     service_slug: &str,
     status: Status,
     input_payload: &serde_json::Value,
-    tasks_payload: &serde_json::Value,
+    tasks: &serde_json::Value,
 ) -> Result<CatalogExecutionStatus, QError> {
     Ok(
         sqlx::query_as::<_, CatalogExecutionStatus>(
             r#"
-            INSERT INTO catalog_execution_statuses (catalog_slug, service_slug, status, input_payload, tasks_payload)
+            INSERT INTO catalog_execution_statuses (catalog_slug, service_slug, status, input_payload, tasks)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING *
         "#
@@ -111,7 +111,7 @@ pub async fn insert_catalog_execution_status(
             .bind(service_slug)
             .bind(status)
             .bind(input_payload)
-            .bind(tasks_payload)
+            .bind(tasks)
             .fetch_one(pg_pool)
             .await?
     )
@@ -121,19 +121,19 @@ pub async fn update_catalog_execution_status(
     pg_pool: &Pool<Postgres>,
     id: &str,
     status: Status,
-    tasks_payload: &serde_json::Value,
+    tasks: &serde_json::Value,
 ) -> Result<CatalogExecutionStatus, QError> {
     Ok(
         sqlx::query_as::<_, CatalogExecutionStatus>(
             r#"
             UPDATE catalog_execution_statuses
-            SET status = $1, tasks_payload = $2
+            SET status = $1, tasks = $2
             WHERE id = $3
             RETURNING *
         "#
         )
             .bind(status)
-            .bind(tasks_payload)
+            .bind(tasks)
             .bind(Uuid::from_str(id).unwrap())
             .fetch_one(pg_pool)
             .await?
