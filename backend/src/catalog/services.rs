@@ -5,7 +5,7 @@ use sqlx::{Pool, Postgres};
 use tokio::sync::mpsc::Receiver;
 use tracing::error;
 
-use crate::catalog::{execute_command, ExecValidateScriptRequest};
+use crate::catalog::{execute_command, ExecValidateScriptRequest, JobOutputResult};
 use crate::database::{Status, update_catalog_execution_status};
 use crate::yaml_config::{CatalogServicePostValidateYamlConfig, CatalogServiceYamlConfig};
 
@@ -39,7 +39,8 @@ pub struct TasksPayload {
 pub struct TaskPayload {
     status: Status,
     message: Option<String>,
-    post_validate: CatalogServicePostValidateYamlConfig,
+    post_validate_input: CatalogServicePostValidateYamlConfig,
+    post_validate_output: Option<JobOutputResult>,
 }
 
 pub async fn background_worker(mut rx: Receiver<BackgroundWorkerTask>, pg_pool: Arc<Pool<Postgres>>) {
@@ -56,7 +57,6 @@ pub async fn background_worker(mut rx: Receiver<BackgroundWorkerTask>, pg_pool: 
             continue;
         }
 
-        // TODO pass output from post_validate script to next post_validate script
         let mut tasks_payload = TasksPayload { tasks: vec![] };
 
         for cmd in task.catalog_service_yaml_config.post_validate.as_ref().unwrap_or(&vec![]) {
@@ -66,7 +66,8 @@ pub async fn background_worker(mut rx: Receiver<BackgroundWorkerTask>, pg_pool: 
                     let task_payload = TaskPayload {
                         status: Status::Failure,
                         message: Some(err.to_string()),
-                        post_validate: cmd.clone(),
+                        post_validate_input: cmd.clone(),
+                        post_validate_output: None,
                     };
 
                     let _ = tasks_payload.tasks.push(task_payload);
@@ -82,10 +83,13 @@ pub async fn background_worker(mut rx: Receiver<BackgroundWorkerTask>, pg_pool: 
                 }
             };
 
+            // TODO pass output to next command
+
             let task_payload = TaskPayload {
                 status: Status::Success,
                 message: None,
-                post_validate: cmd.clone(),
+                post_validate_input: cmd.clone(),
+                post_validate_output: Some(job_output_result),
             };
 
             let _ = tasks_payload.tasks.push(task_payload);

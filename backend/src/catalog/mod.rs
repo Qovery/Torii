@@ -28,10 +28,11 @@ pub struct ExecValidateScriptRequest {
     payload: serde_json::Value,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct JobOutputResult {
     pub one_liner_command: String,
     pub output: serde_json::Value,
+    pub execution_time_in_millis: u128,
 }
 
 fn find_catalog_by_slug<'a>(catalogs: &'a Vec<CatalogYamlConfig>, catalog_slug: &str) -> Option<&'a CatalogYamlConfig> {
@@ -43,15 +44,17 @@ fn find_catalog_service_by_slug<'a>(catalog: &'a CatalogYamlConfig, service_slug
 }
 
 /// Extract the job output from the environment variable TORII_JSON_OUTPUT and reset it to an empty JSON object
-fn consume_job_output_result_from_json_output_env(service_slug: &str) -> JobOutputResult {
+fn consume_job_output_result_from_json_output_env(service_slug: &str, execution_time: u128) -> JobOutputResult {
     let job_output_result = match std::env::var("TORII_JSON_OUTPUT") {
         Ok(json_output) => JobOutputResult {
             one_liner_command: service_slug.to_string(),
             output: serde_json::from_str(json_output.as_str()).unwrap_or(serde_json::json!({})),
+            execution_time_in_millis: execution_time,
         },
         Err(_) => JobOutputResult {
             one_liner_command: service_slug.to_string(),
             output: serde_json::json!({}),
+            execution_time_in_millis: execution_time,
         }
     };
 
@@ -118,6 +121,9 @@ async fn execute_command<T>(
 
     cmd.arg(json_payload);
 
+    // start execution timer
+    let start = std::time::Instant::now();
+
     let mut child = match cmd.spawn() {
         Ok(child) => child,
         Err(err) => return Err(format!("Validate script '{}' failed: {}", &cmd_one_line, err))
@@ -144,7 +150,7 @@ async fn execute_command<T>(
 
     // TODO parse output.stdout and output.stderr and forward to the frontend
 
-    Ok(consume_job_output_result_from_json_output_env(cmd_one_line.as_str()))
+    Ok(consume_job_output_result_from_json_output_env(cmd_one_line.as_str(), start.elapsed().as_millis()))
 }
 
 fn get_catalog_and_service<'a>(
