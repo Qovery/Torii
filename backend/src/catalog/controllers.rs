@@ -9,7 +9,7 @@ use tracing::error;
 use crate::catalog::{check_json_payload_against_yaml_config_fields, execute_command, ExecValidateScriptRequest, find_catalog_by_slug, get_catalog_and_service, JobResponse, ResultsResponse};
 use crate::catalog::services::BackgroundWorkerTask;
 use crate::database;
-use crate::database::{CatalogExecutionStatusJson, insert_catalog_execution_status, Status};
+use crate::database::{CatalogRunJson, insert_catalog_run, Status};
 use crate::yaml_config::{CatalogServiceYamlConfig, CatalogYamlConfig, YamlConfig};
 
 #[debug_handler]
@@ -36,11 +36,11 @@ pub async fn list_catalog_services(
 }
 
 #[debug_handler]
-pub async fn list_catalog_execution_statuses(
+pub async fn list_catalog_runs(
     Extension(pg_pool): Extension<Arc<sqlx::PgPool>>,
     Path((catalog_slug, service_slug)): Path<(String, String)>,
-) -> (StatusCode, Json<ResultsResponse<CatalogExecutionStatusJson>>) {
-    match database::list_catalog_execution_statuses(&pg_pool, &catalog_slug, &service_slug).await {
+) -> (StatusCode, Json<ResultsResponse<CatalogRunJson>>) {
+    match database::list_catalog_runs(&pg_pool, &catalog_slug, &service_slug).await {
         Ok(catalog_execution_statuses) => {
             (StatusCode::OK, Json(ResultsResponse { message: None, results: catalog_execution_statuses.iter().map(|x| x.to_json()).collect() }))
         }
@@ -121,7 +121,7 @@ pub async fn exec_catalog_service_post_validate_scripts(
         };
     }
 
-    let ces = match insert_catalog_execution_status(
+    let ces = match insert_catalog_run(
         &pg_pool,
         &catalog_slug,
         &service_slug,

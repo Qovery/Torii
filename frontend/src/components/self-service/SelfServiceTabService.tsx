@@ -28,7 +28,7 @@ export default function SelfServiceTabService({catalogSlug, services}: Props) {
 
   if (services.length === 0) {
     return <div className="my-5">
-      <EmptyState text="No Fields" subText="This service has no fields."/>
+      <EmptyState text="No Services" subText="This catalog has no services."/>
     </div>
   }
 

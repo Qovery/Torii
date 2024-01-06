@@ -7,7 +7,7 @@ use sqlx::types::Uuid;
 use crate::errors::QError;
 
 #[derive(sqlx::FromRow)]
-pub struct CatalogExecutionStatus {
+pub struct CatalogRun {
     id: Uuid,
     created_at: chrono::NaiveDateTime,
     updated_at: chrono::NaiveDateTime,
@@ -29,9 +29,9 @@ pub enum Status {
     Failure,
 }
 
-impl CatalogExecutionStatus {
-    pub fn to_json(&self) -> CatalogExecutionStatusJson {
-        CatalogExecutionStatusJson {
+impl CatalogRun {
+    pub fn to_json(&self) -> CatalogRunJson {
+        CatalogRunJson {
             id: self.id.to_string(),
             created_at: self.created_at.to_string(),
             updated_at: self.updated_at.to_string(),
@@ -49,7 +49,7 @@ impl CatalogExecutionStatus {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct CatalogExecutionStatusJson {
+pub struct CatalogRunJson {
     pub id: String,
     pub created_at: String,
     pub updated_at: String,
@@ -71,16 +71,16 @@ pub async fn init_database(pg_pool: &Pool<Postgres>) -> Result<(), QError> {
     Ok(())
 }
 
-pub async fn list_catalog_execution_statuses(
+pub async fn list_catalog_runs(
     pg_pool: &Pool<Postgres>,
     catalog_slug: &str,
     service_slug: &str,
-) -> Result<Vec<CatalogExecutionStatus>, QError> {
+) -> Result<Vec<CatalogRun>, QError> {
     Ok(
-        sqlx::query_as::<_, CatalogExecutionStatus>(
+        sqlx::query_as::<_, CatalogRun>(
             r#"
             SELECT *
-            FROM catalog_execution_statuses
+            FROM catalog_runs
             WHERE catalog_slug = $1 AND service_slug = $2
         "#
         )
@@ -91,18 +91,18 @@ pub async fn list_catalog_execution_statuses(
     )
 }
 
-pub async fn insert_catalog_execution_status(
+pub async fn insert_catalog_run(
     pg_pool: &Pool<Postgres>,
     catalog_slug: &str,
     service_slug: &str,
     status: Status,
     input_payload: &serde_json::Value,
     tasks: &serde_json::Value,
-) -> Result<CatalogExecutionStatus, QError> {
+) -> Result<CatalogRun, QError> {
     Ok(
-        sqlx::query_as::<_, CatalogExecutionStatus>(
+        sqlx::query_as::<_, CatalogRun>(
             r#"
-            INSERT INTO catalog_execution_statuses (catalog_slug, service_slug, status, input_payload, tasks)
+            INSERT INTO catalog_runs (catalog_slug, service_slug, status, input_payload, tasks)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING *
         "#
@@ -117,16 +117,16 @@ pub async fn insert_catalog_execution_status(
     )
 }
 
-pub async fn update_catalog_execution_status(
+pub async fn update_catalog_run(
     pg_pool: &Pool<Postgres>,
     id: &str,
     status: Status,
     tasks: &serde_json::Value,
-) -> Result<CatalogExecutionStatus, QError> {
+) -> Result<CatalogRun, QError> {
     Ok(
-        sqlx::query_as::<_, CatalogExecutionStatus>(
+        sqlx::query_as::<_, CatalogRun>(
             r#"
-            UPDATE catalog_execution_statuses
+            UPDATE catalog_runs
             SET status = $1, tasks = $2
             WHERE id = $3
             RETURNING *

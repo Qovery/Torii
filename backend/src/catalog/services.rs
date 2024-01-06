@@ -6,7 +6,7 @@ use tokio::sync::mpsc::Receiver;
 use tracing::error;
 
 use crate::catalog::{execute_command, ExecValidateScriptRequest, JobOutputResult};
-use crate::database::{Status, update_catalog_execution_status};
+use crate::database::{Status, update_catalog_run};
 use crate::yaml_config::{CatalogServicePostValidateYamlConfig, CatalogServiceYamlConfig};
 
 #[derive(Serialize, Deserialize)]
@@ -40,7 +40,7 @@ pub struct TaskPayload {
 
 pub async fn background_worker(mut rx: Receiver<BackgroundWorkerTask>, pg_pool: Arc<Pool<Postgres>>) {
     while let Some(task) = rx.recv().await {
-        let r = update_catalog_execution_status(
+        let r = update_catalog_run(
             &pg_pool,
             task.catalog_execution_status_id.as_str(),
             Status::Running,
@@ -67,7 +67,7 @@ pub async fn background_worker(mut rx: Receiver<BackgroundWorkerTask>, pg_pool: 
 
                     let _ = tasks.push(task_payload);
 
-                    let _ = update_catalog_execution_status(
+                    let _ = update_catalog_run(
                         &pg_pool,
                         task.catalog_execution_status_id.as_str(),
                         Status::Failure,
@@ -89,7 +89,7 @@ pub async fn background_worker(mut rx: Receiver<BackgroundWorkerTask>, pg_pool: 
 
             let _ = tasks.push(task_payload);
 
-            let _ = update_catalog_execution_status(
+            let _ = update_catalog_run(
                 &pg_pool,
                 task.catalog_execution_status_id.as_str(),
                 Status::Success,

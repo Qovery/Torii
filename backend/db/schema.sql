@@ -13,8 +13,8 @@ $$
     END
 $$;
 
--- create a new flat table to store catalog execution results
-CREATE TABLE IF NOT EXISTS catalog_execution_statuses
+-- create a new flat table to store catalog runs
+CREATE TABLE IF NOT EXISTS catalog_runs
 (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
     created_at    TIMESTAMP        DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -26,5 +26,5 @@ CREATE TABLE IF NOT EXISTS catalog_execution_statuses
     tasks         JSONB DEFAULT '{}'::jsonb NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS catalog_execution_statuses_catalog_slug_idx ON catalog_execution_statuses (catalog_slug);
-CREATE INDEX IF NOT EXISTS catalog_execution_statuses_service_slug_idx ON catalog_execution_statuses (service_slug);
+CREATE INDEX IF NOT EXISTS catalog_runs_catalog_slug_idx ON catalog_runs (catalog_slug);
+CREATE INDEX IF NOT EXISTS catalog_runs_service_slug_idx ON catalog_runs (service_slug);
