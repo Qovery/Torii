@@ -36,11 +36,11 @@ pub async fn list_catalog_services(
 }
 
 #[debug_handler]
-pub async fn list_catalog_runs(
+pub async fn list_catalog_runs_by_catalog_and_service_slugs(
     Extension(pg_pool): Extension<Arc<sqlx::PgPool>>,
     Path((catalog_slug, service_slug)): Path<(String, String)>,
 ) -> (StatusCode, Json<ResultsResponse<CatalogRunJson>>) {
-    match database::list_catalog_runs(&pg_pool, &catalog_slug, &service_slug).await {
+    match database::list_catalog_runs_by_catalog_and_service_slugs(&pg_pool, &catalog_slug, &service_slug).await {
         Ok(catalog_execution_statuses) => {
             (StatusCode::OK, Json(ResultsResponse { message: None, results: catalog_execution_statuses.iter().map(|x| x.to_json()).collect() }))
         }
@@ -50,6 +50,23 @@ pub async fn list_catalog_runs(
         }
     }
 }
+
+#[debug_handler]
+pub async fn list_catalog_runs_by_catalog_slug(
+    Extension(pg_pool): Extension<Arc<sqlx::PgPool>>,
+    Path(catalog_slug): Path<String>,
+) -> (StatusCode, Json<ResultsResponse<CatalogRunJson>>) {
+    match database::list_catalog_runs_by_catalog_slug(&pg_pool, &catalog_slug).await {
+        Ok(catalog_execution_statuses) => {
+            (StatusCode::OK, Json(ResultsResponse { message: None, results: catalog_execution_statuses.iter().map(|x| x.to_json()).collect() }))
+        }
+        Err(err) => {
+            error!("failed to list catalog execution statuses: {:?}", err);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(ResultsResponse { message: Some(err.to_string()), results: vec![] }))
+        }
+    }
+}
+
 
 #[debug_handler]
 pub async fn exec_catalog_service_validate_scripts(

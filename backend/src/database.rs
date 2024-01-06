@@ -71,7 +71,7 @@ pub async fn init_database(pg_pool: &Pool<Postgres>) -> Result<(), QError> {
     Ok(())
 }
 
-pub async fn list_catalog_runs(
+pub async fn list_catalog_runs_by_catalog_and_service_slugs(
     pg_pool: &Pool<Postgres>,
     catalog_slug: &str,
     service_slug: &str,
@@ -86,6 +86,24 @@ pub async fn list_catalog_runs(
         )
             .bind(catalog_slug)
             .bind(service_slug)
+            .fetch_all(pg_pool)
+            .await?
+    )
+}
+
+pub async fn list_catalog_runs_by_catalog_slug(
+    pg_pool: &Pool<Postgres>,
+    catalog_slug: &str,
+) -> Result<Vec<CatalogRun>, QError> {
+    Ok(
+        sqlx::query_as::<_, CatalogRun>(
+            r#"
+            SELECT *
+            FROM catalog_runs
+            WHERE catalog_slug = $1
+        "#
+        )
+            .bind(catalog_slug)
             .fetch_all(pg_pool)
             .await?
     )

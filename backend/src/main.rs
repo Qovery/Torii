@@ -13,7 +13,7 @@ use tracing::log::warn;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
-use crate::catalog::controllers::{exec_catalog_service_post_validate_scripts, exec_catalog_service_validate_scripts, list_catalog_runs, list_catalog_services, list_catalogs};
+use crate::catalog::controllers::{exec_catalog_service_post_validate_scripts, exec_catalog_service_validate_scripts, list_catalog_runs_by_catalog_and_service_slugs, list_catalog_runs_by_catalog_slug, list_catalog_services, list_catalogs};
 use crate::catalog::services::BackgroundWorkerTask;
 use crate::cli::CLI;
 use crate::database::init_database;
@@ -106,10 +106,10 @@ async fn main() {
         .route("/healthz", get(|| async { "OK" }))
         .route("/catalogs", get(list_catalogs))
         .route("/catalogs/:slug/services", get(list_catalog_services))
-        .route("/catalogs/:slug/runs", get(list_catalog_services))
+        .route("/catalogs/:slug/runs", get(list_catalog_runs_by_catalog_slug))
         .route("/catalogs/:slug/services/:slug/validate", post(exec_catalog_service_validate_scripts))
         .route("/catalogs/:slug/services/:slug/execute", post(exec_catalog_service_post_validate_scripts))
-        .route("/catalogs/:slug/services/:slug/runs", get(list_catalog_runs))
+        .route("/catalogs/:slug/services/:slug/runs", get(list_catalog_runs_by_catalog_and_service_slugs))
         .layer(Extension(yaml_config))
         .layer(Extension(tx))
         .layer(Extension(pg_pool))
