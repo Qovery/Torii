@@ -31,11 +31,6 @@ impl BackgroundWorkerTask {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct TasksPayload {
-    tasks: Vec<TaskPayload>,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
 pub struct TaskPayload {
     status: Status,
     message: Option<String>,
@@ -57,7 +52,7 @@ pub async fn background_worker(mut rx: Receiver<BackgroundWorkerTask>, pg_pool: 
             continue;
         }
 
-        let mut tasks_payload = TasksPayload { tasks: vec![] };
+        let mut tasks = Vec::<TaskPayload>::new();
 
         for cmd in task.catalog_service_yaml_config.post_validate.as_ref().unwrap_or(&vec![]) {
             let job_output_result = match execute_command(cmd, task.req.payload.to_string().as_str()).await {
@@ -70,13 +65,13 @@ pub async fn background_worker(mut rx: Receiver<BackgroundWorkerTask>, pg_pool: 
                         post_validate_output: None,
                     };
 
-                    let _ = tasks_payload.tasks.push(task_payload);
+                    let _ = tasks.push(task_payload);
 
                     let _ = update_catalog_execution_status(
                         &pg_pool,
                         task.catalog_execution_status_id.as_str(),
                         Status::Failure,
-                        &serde_json::to_value(tasks_payload.clone()).unwrap(),
+                        &serde_json::to_value(tasks.clone()).unwrap(),
                     ).await;
 
                     break;
@@ -92,13 +87,13 @@ pub async fn background_worker(mut rx: Receiver<BackgroundWorkerTask>, pg_pool: 
                 post_validate_output: Some(job_output_result),
             };
 
-            let _ = tasks_payload.tasks.push(task_payload);
+            let _ = tasks.push(task_payload);
 
             let _ = update_catalog_execution_status(
                 &pg_pool,
                 task.catalog_execution_status_id.as_str(),
                 Status::Success,
-                &serde_json::to_value(tasks_payload.clone()).unwrap(),
+                &serde_json::to_value(tasks.clone()).unwrap(),
             ).await;
         }
     }

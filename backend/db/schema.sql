@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS catalog_execution_statuses
     service_slug  VARCHAR(255)              NOT NULL,
     status        status                    NOT NULL,
     input_payload JSONB DEFAULT '{}'::jsonb NOT NULL,
-    tasks_payload JSONB DEFAULT '{}'::jsonb NOT NULL
+    tasks         JSONB DEFAULT '{}'::jsonb NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS catalog_execution_statuses_catalog_slug_idx ON catalog_execution_statuses (catalog_slug);

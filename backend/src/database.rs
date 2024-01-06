@@ -15,7 +15,7 @@ pub struct CatalogExecutionStatus {
     service_slug: String,
     status: Status,
     input_payload: serde_json::Value,
-    tasks_payload: serde_json::Value,
+    tasks: serde_json::Value,
 }
 
 #[derive(sqlx::Type, Clone, Serialize, Deserialize, Debug)]
@@ -39,7 +39,7 @@ impl CatalogExecutionStatus {
             service_slug: self.service_slug.clone(),
             status: self.status.clone(),
             input_payload: self.input_payload.clone(),
-            tasks_payload: self.tasks_payload.clone(),
+            tasks: self.tasks.clone(),
         }
     }
 
@@ -57,7 +57,7 @@ pub struct CatalogExecutionStatusJson {
     pub service_slug: String,
     pub status: Status,
     pub input_payload: serde_json::Value,
-    pub tasks_payload: serde_json::Value,
+    pub tasks: serde_json::Value,
 }
 
 /// Initialize the database by creating the tables
