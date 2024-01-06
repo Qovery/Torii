@@ -13,10 +13,10 @@ services:
       - $PWD/frontend:/app
       - torii-frontend-node-modules:/app/node_modules
     depends_on:
-      backend3:
+      backend:
         condition: service_started
 
-  backend3:
+  backend:
     restart: always
     build: 
       context: backend
