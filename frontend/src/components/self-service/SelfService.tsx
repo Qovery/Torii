@@ -1,11 +1,7 @@
-import EmptyState from "@/components/common/EmptyState.tsx";
-import SelfServiceCard from "@/components/self-service/SelfServiceCard.tsx";
-import {TargetIcon} from "lucide-react";
-import SelfServiceSlideOver from "@/components/self-service/SelfServiceSlideOver.tsx";
 import {useState} from "react";
-import {Transition} from "@headlessui/react";
-import {TrashIcon} from "@heroicons/react/24/outline";
 import {classNames} from "@/lib/utils.ts";
+import SelfServiceTabService from "@/components/self-service/SelfServiceTabService.tsx";
+import SelfServiceTabRun from "@/components/self-service/SelfServiceTabRun.tsx";
 
 const tabs = [
   {name: 'Services', href: '#', current: true},
@@ -17,20 +13,9 @@ interface Props {
   services: any[]
 }
 
-function getIcon(icon?: string): JSX.Element {
-  switch (icon?.toLowerCase()) {
-    case 'target':
-      return <TargetIcon className="h-6 w-6" aria-hidden="true"/>
-    case 'trash':
-      return <TrashIcon className="h-6 w-6" aria-hidden="true"/>
-    default:
-      return <TargetIcon className="h-6 w-6" aria-hidden="true"/>
-  }
-}
 
 export default function SelfService({catalogSlug, services}: Props) {
   const [activeTab, setActiveTab] = useState(tabs[0])
-  const [showSideOver, setShowSideOver] = useState({show: false, service: {}}) // pass service
 
   return <>
     <div className="border-b border-gray-200">
@@ -61,46 +46,13 @@ export default function SelfService({catalogSlug, services}: Props) {
       </div>
     </div>
 
+
     {
-      activeTab.name === 'Services' && services.length === 0 &&
-      <div className="my-5">
-        <EmptyState text="No Services" subText="This catalog has no services."/>
-      </div>
+      activeTab.name === 'Services' && <SelfServiceTabService catalogSlug={catalogSlug} services={services}/>
     }
 
     {
-      activeTab.name === 'Services' && services.length > 0 && <>
-        <div className="my-5 divide-y divide-gray-200 overflow-hidden rounded-lg bg-gray-200 shadow sm:grid sm:grid-cols-3 sm:gap-px sm:divide-y-0">
-          {
-            services.map((service, idx) => {
-              return <SelfServiceCard
-                key={service.name}
-                title={service.name}
-                description={service.description}
-                icon={getIcon(service.icon)}
-                index={idx}
-                totalCards={services.length}
-                onClick={() => {
-                  setShowSideOver({show: true, service: service})
-                }}/>
-            })
-          }
-        </div>
-        <Transition show={showSideOver.show}>
-          <SelfServiceSlideOver service={showSideOver.service} onClose={() => setShowSideOver({
-            show: false,
-            service: showSideOver.service
-          })} catalogSlug={catalogSlug}/>
-        </Transition>
-      </>
-    }
-
-    {
-      activeTab.name === 'Runs' && <>
-        <div className="my-5">
-          <EmptyState text="No Runs" subText="This catalog has no runs"/>
-        </div>
-      </>
+      activeTab.name === 'Runs' && <SelfServiceTabRun catalogSlug={catalogSlug}/>
     }
 
   </>
