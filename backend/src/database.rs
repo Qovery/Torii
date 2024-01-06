@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
-use sqlx::{Executor, Pool, Postgres};
+use sqlx::{Pool, Postgres};
 use sqlx::types::Uuid;
 
 use crate::errors::QError;
@@ -58,17 +58,6 @@ pub struct CatalogExecutionStatusJson {
     pub status: Status,
     pub input_payload: serde_json::Value,
     pub tasks: serde_json::Value,
-}
-
-/// Initialize the database by creating the tables
-pub async fn init_database(pg_pool: &Pool<Postgres>) -> Result<(), QError> {
-    // read SQL schema from file
-    let sql_schema = include_str!("../db/schema.sql");
-
-    // execute SQL schema
-    let _ = pg_pool.execute(sql_schema).await?;
-
-    Ok(())
 }
 
 pub async fn list_catalog_execution_statuses(
