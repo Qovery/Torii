@@ -44,7 +44,7 @@ pub async fn background_worker(mut rx: Receiver<BackgroundWorkerTask>, pg_pool: 
             &pg_pool,
             task.catalog_execution_status_id.as_str(),
             Status::Running,
-            &serde_json::Value::Object(serde_json::Map::new()),
+            &serde_json::Value::Array(vec![]),
         ).await;
 
         if let Err(err) = r {

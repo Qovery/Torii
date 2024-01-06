@@ -143,7 +143,7 @@ pub async fn exec_catalog_service_post_validate_scripts(
         &service_slug,
         Status::Queued,
         &req.payload,
-        &serde_json::Value::Object(serde_json::Map::new()),
+        &serde_json::Value::Array(vec![]),
     ).await {
         Ok(ces) => ces,
         Err(err) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(JobResponse {
