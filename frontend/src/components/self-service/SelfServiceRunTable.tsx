@@ -25,6 +25,20 @@ function getTotalExecutionTime(tasks: any[]): number {
   }, 0)
 }
 
+function totalSuccessTasks(tasks: any[]): number {
+  if (tasks === undefined || tasks.length === 0) {
+    return 0
+  }
+
+  return tasks.reduce((acc, task) => {
+    if (task.status === 'SUCCESS') {
+      return acc + 1
+    }
+
+    return acc
+  }, 0)
+}
+
 export default function SelfServiceRunTable({runs}: Props): JSX.Element {
   return (
     <div className="px-4 sm:px-6 lg:px-8">
@@ -71,7 +85,7 @@ export default function SelfServiceRunTable({runs}: Props): JSX.Element {
                       <div className="hidden text-gray-500 text- sm:block">{run.status}</div>
                     </div>
                   </td>
-                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{run.tasks.length}/{run.tasks.length}</td>
+                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{totalSuccessTasks(run.tasks)}/{run.tasks.length}</td>
                   <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{millisToHumanTime(getTotalExecutionTime(run.tasks))}</td>
                   <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 lg:pr-8">
                     <a href="#" className="text-indigo-600 hover:text-indigo-900">
