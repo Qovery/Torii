@@ -127,16 +127,6 @@ pub async fn exec_catalog_service_post_validate_scripts(
         Err(err) => return err
     };
 
-    // execute validate scripts
-    for cmd in service.validate.as_ref().unwrap_or(&vec![]) {
-        let _ = match execute_command(cmd, req.payload.to_string().as_str()).await {
-            Ok(_) => (),
-            Err(err) => return (StatusCode::BAD_REQUEST, Json(JobResponse {
-                message: Some(err),
-            }))
-        };
-    }
-
     let ces = match insert_catalog_run(
         &pg_pool,
         &catalog_slug,

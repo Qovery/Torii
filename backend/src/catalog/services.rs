@@ -54,6 +54,8 @@ pub async fn background_worker(mut rx: Receiver<BackgroundWorkerTask>, pg_pool: 
 
         let mut tasks = Vec::<TaskPayload>::new();
 
+        let mut last_task_value = serde_json::Value::Array(vec![]);
+
         for cmd in task.catalog_service_yaml_config.post_validate.as_ref().unwrap_or(&vec![]) {
             let job_output_result = match execute_command(cmd, task.req.payload.to_string().as_str()).await {
                 Ok(job_output_result) => job_output_result,
@@ -89,12 +91,21 @@ pub async fn background_worker(mut rx: Receiver<BackgroundWorkerTask>, pg_pool: 
 
             let _ = tasks.push(task_payload);
 
+            last_task_value = serde_json::to_value(tasks.clone()).unwrap();
+
             let _ = update_catalog_run(
                 &pg_pool,
                 task.catalog_execution_status_id.as_str(),
-                Status::Success,
-                &serde_json::to_value(tasks.clone()).unwrap(),
+                Status::Running,
+                &last_task_value,
             ).await;
         }
+
+        let _ = update_catalog_run(
+            &pg_pool,
+            task.catalog_execution_status_id.as_str(),
+            Status::Success,
+            &last_task_value,
+        ).await;
     }
 }
