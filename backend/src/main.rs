@@ -3,11 +3,11 @@ use std::fs::File;
 use std::sync::Arc;
 
 use axum::{Extension, Router};
-use axum::http::{StatusCode, Uri};
+use axum::http::{Method, StatusCode, Uri};
 use axum::routing::{get, post};
 use clap::Parser;
 use sqlx::postgres::PgPoolOptions;
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::{AllowHeaders, Any, CorsLayer};
 use tracing::{error, info};
 use tracing::log::warn;
 use tracing_subscriber::layer::SubscriberExt;
@@ -113,7 +113,12 @@ async fn main() {
         .layer(Extension(yaml_config))
         .layer(Extension(tx))
         .layer(Extension(pg_pool))
-        .layer(CorsLayer::new().allow_origin(Any));
+        .layer(
+            CorsLayer::new()
+                .allow_origin(Any)
+                .allow_methods(vec![Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS])
+                .allow_headers(AllowHeaders::any())
+        );
     //.route("/catalog/:id", get(catalog::get_catalog_by_id))
     //.route("/catalog", post(catalog::create_catalog));
 

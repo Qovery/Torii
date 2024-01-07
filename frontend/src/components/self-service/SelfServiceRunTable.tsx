@@ -1,14 +1,23 @@
 import {classNames, millisToHumanTime} from "@/lib/utils.ts";
 
-const statuses = {
-  QUEUED: 'text-orange-400 bg-orange-400/10',
-  RUNNING: 'text-cyan-400 bg-cyan-400/10',
-  SUCCESS: 'text-green-400 bg-green-400/10',
-  FAILURE: 'text-rose-400 bg-rose-400/10'
-}
+function getStatusStyle(status: string): string {
+  if (status === 'QUEUED') {
+    return 'text-orange-400 bg-orange-400/10'
+  }
 
-interface Props {
-  runs: any[]
+  if (status === 'RUNNING') {
+    return 'text-cyan-400 bg-cyan-400/10'
+  }
+
+  if (status === 'SUCCESS') {
+    return 'text-green-400 bg-green-400/10'
+  }
+
+  if (status === 'FAILURE') {
+    return 'text-rose-400 bg-rose-400/10'
+  }
+
+  return 'text-gray-400 bg-gray-400/10'
 }
 
 function getTotalExecutionTime(tasks: any[]): number {
@@ -39,6 +48,10 @@ function totalSuccessTasks(tasks: any[]): number {
   }, 0)
 }
 
+interface Props {
+  runs: any[]
+}
+
 export default function SelfServiceRunTable({runs}: Props): JSX.Element {
   return (
     <div className="px-4 sm:px-6 lg:px-8">
@@ -53,6 +66,9 @@ export default function SelfServiceRunTable({runs}: Props): JSX.Element {
                   className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 lg:pl-8"
                 >
                   Date
+                </th>
+                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                  Service
                 </th>
                 <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                   Status
@@ -74,12 +90,15 @@ export default function SelfServiceRunTable({runs}: Props): JSX.Element {
                   <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-500 sm:pl-6 lg:pl-8">
                     {run.created_at}
                   </td>
+                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                    {run.service_slug}
+                  </td>
                   <td className="py-4 pl-0 pr-4 text-sm leading-6 sm:pr-8 lg:pr-20">
                     <div className="flex items-center justify-end gap-x-2 sm:justify-start">
                       <time className="text-gray-400 sm:hidden" dateTime={run.created_at}>
                         {run.created_at}
                       </time>
-                      <div className={classNames(statuses[run.status], 'flex-none rounded-full p-1')}>
+                      <div className={classNames(getStatusStyle(run.status), 'flex-none rounded-full p-1')}>
                         <div className="h-1.5 w-1.5 rounded-full bg-current"/>
                       </div>
                       <div className="hidden text-gray-500 text- sm:block">{run.status}</div>

@@ -6,8 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = { version = "0.7.2", features = ["macros"] }
-tower-http = { version = "0.5.0", features = ["cors"] }
+axum = { version = "0.7", features = ["macros"] }
+tower-http = { version = "0.5", features = ["cors"] }
 tokio = { version = "1", features = ["full"] }
 sqlx = { version = "0.7", features = ["postgres", "uuid", "json", "chrono", "runtime-tokio", "tls-native-tls"] }
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }

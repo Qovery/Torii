@@ -4,7 +4,6 @@ import {XMarkIcon} from '@heroicons/react/24/outline'
 import TextField from "@/components/self-service/fields/TextField.tsx";
 import TextareaField from "@/components/self-service/fields/TextareaField.tsx";
 import SwitchField from "@/components/self-service/fields/SwitchField.tsx";
-import {useQuery} from "@tanstack/react-query";
 import {API_URL} from "@/config.ts";
 
 interface Props {
@@ -35,20 +34,23 @@ export default function SelfServiceSlideOver({catalogSlug, service, onClose}: Pr
 
     const fields = []
     for (const [id, value] of new FormData(event.target)) {
-      fields.push({
-        field_slug: id,
-        value: value
-      })
+      fields.push([id, value])
     }
 
-    console.log({payload: fields})
+    const payload = Object.fromEntries(fields)
 
-    useQuery({
-      queryKey: [`${service.slug}-submit`, fields],
-      queryFn: () =>
-        fetch(`${API_URL}/catalogs/${catalogSlug}/services/${service.slug}/execute`).then(
-          (res) => res.json(),
-        ),
+    console.log({payload: payload})
+
+    fetch(`${API_URL}/catalogs/${catalogSlug}/services/${service.slug}/execute`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({payload: payload}),
+    }).then(
+      (res) => res.json(),
+    ).then((data) => {
+      console.log(data)
     })
   }
 
