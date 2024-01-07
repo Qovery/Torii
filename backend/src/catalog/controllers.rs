@@ -190,6 +190,7 @@ mod tests {
                             name: "Service 1".to_string(),
                             description: None,
                             icon: None,
+                            icon_color: None,
                             fields: Some(vec![
                                 CatalogFieldYamlConfig {
                                     slug: "field-1".to_string(),

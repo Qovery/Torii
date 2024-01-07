@@ -1,22 +1,8 @@
 import {useState} from "react";
-import {TargetIcon} from "lucide-react";
-import {TrashIcon} from "@heroicons/react/24/outline";
 import EmptyState from "@/components/common/EmptyState.tsx";
 import SelfServiceCard from "@/components/self-service/SelfServiceCard.tsx";
 import {Transition} from "@headlessui/react";
 import SelfServiceSlideOver from "@/components/self-service/SelfServiceSlideOver.tsx";
-
-
-function getIcon(icon?: string): JSX.Element {
-  switch (icon?.toLowerCase()) {
-    case 'target':
-      return <TargetIcon className="h-6 w-6" aria-hidden="true"/>
-    case 'trash':
-      return <TrashIcon className="h-6 w-6" aria-hidden="true"/>
-    default:
-      return <TargetIcon className="h-6 w-6" aria-hidden="true"/>
-  }
-}
 
 interface Props {
   catalogSlug: string
@@ -40,7 +26,8 @@ export default function SelfServiceTabService({catalogSlug, services}: Props) {
             key={service.name}
             title={service.name}
             description={service.description}
-            icon={getIcon(service.icon)}
+            icon={service.icon}
+            iconColor={service.icon_color}
             index={idx}
             totalCards={services.length}
             onClick={() => {

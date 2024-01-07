@@ -1,47 +1,40 @@
 import {classNames} from "@/lib/utils.ts";
+import {TargetIcon} from "lucide-react";
+import {TrashIcon} from "@heroicons/react/24/outline";
 
-const colors = [
-  {
-    bg: 'bg-teal-50',
-    fg: 'text-teal-700',
-  },
-  {
-    bg: 'bg-purple-50',
-    fg: 'text-purple-700',
-  },
-  {
-    bg: 'bg-sky-50',
-    fg: 'text-sky-700',
-  },
-  {
-    bg: 'bg-yellow-50',
-    fg: 'text-yellow-700',
-  },
-  {
-    bg: 'bg-rose-50',
-    fg: 'text-rose-700',
-  },
-  {
-    bg: 'bg-indigo-50',
-    fg: 'text-indigo-700',
-  },
-]
-
-function getRandomColor(): { bg: string; fg: string } {
-  return colors[Math.floor(Math.random() * colors.length)]
+function getIcon(icon?: string): JSX.Element {
+  switch (icon?.toLowerCase()) {
+    case 'target':
+      return <TargetIcon className="h-6 w-6" aria-hidden="true"/>
+    case 'trash':
+      return <TrashIcon className="h-6 w-6" aria-hidden="true"/>
+    default:
+      return <TargetIcon className="h-6 w-6" aria-hidden="true"/>
+  }
 }
 
 interface Props {
   title: string;
   description: string;
-  icon: JSX.Element;
+  icon: string | undefined;
+  iconColor: string | undefined;
   index: number;
   totalCards: number;
   onClick: () => void;
 }
 
-export default function SelfServiceCard({title, description, icon, index, totalCards, onClick}: Props) {
-  const {bg: iconBackground, fg: iconForeground} = getRandomColor()
+export default function SelfServiceCard({title, description, icon, iconColor, index, totalCards, onClick}: Props) {
+  let iconBackground = 'bg-indigo-50'
+  if (iconColor) {
+    iconBackground = `bg-${iconColor}-50`
+  }
+
+  let iconForeground = 'text-indigo-700'
+  if (iconColor) {
+    iconForeground = `text-${iconColor}-700`
+  }
+
+  const iconElement = getIcon(icon)
 
   return (
     <div>
@@ -63,7 +56,7 @@ export default function SelfServiceCard({title, description, icon, index, totalC
                 'inline-flex rounded-lg p-3 ring-4 ring-white'
               )}
             >
-            {icon}
+            {iconElement}
             </span>
         </div>
         <div className="mt-8">

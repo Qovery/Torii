@@ -11,6 +11,7 @@ catalogs:
         name: New Testing Environment
         description: spin up a temporary testing environment
         icon: target
+        icon_color: teal
         fields:
           - slug: name
             title: Name
@@ -56,6 +57,7 @@ catalogs:
         name: Stop Testing Environment
         description: stop a testing environment
         icon: trash
+        icon_color: rose
         fields:
           - slug: name
             title: Name
