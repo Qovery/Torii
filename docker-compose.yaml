@@ -6,6 +6,7 @@ services:
     depends_on:
       backend:
         condition: service_started
+
   backend:
     image: torii-backend:latest
     restart: always
