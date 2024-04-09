@@ -25,7 +25,7 @@ export type ExecuteServicePayload = {
 export function SelfServiceCreateDialog() {
   const selectedService = useAtomValue(selectedServiceAtom);
   const setCreateDialogOpened = useSetAtom(
-    dialogOpenedAtomFamily(DialogIds.CreateService)
+    dialogOpenedAtomFamily(DialogIds.CreateService),
   );
 
   const initialFocus = {
@@ -36,8 +36,8 @@ export function SelfServiceCreateDialog() {
   const form = useForm({
     resolver: yupResolver(
       createDynamicSchema<ExecuteServicePayload>(
-        selectedService?.fields as Field[]
-      )
+        selectedService?.fields as Field[],
+      ),
     ),
     mode: "onChange",
   });

@@ -14,7 +14,7 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
 const TextField = forwardRef(
   (
     { field, ...props }: TextFieldProps,
-    ref: ForwardedRef<HTMLInputElement>
+    ref: ForwardedRef<HTMLInputElement>,
   ) => {
     const { register, unregister } = useFormContext();
 
@@ -23,7 +23,7 @@ const TextField = forwardRef(
         unregister(field.slug);
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      []
+      [],
     );
 
     return (
@@ -57,7 +57,7 @@ const TextField = forwardRef(
         </div>
       </div>
     );
-  }
+  },
 );
 
 export default TextField;

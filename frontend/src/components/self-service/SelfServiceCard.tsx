@@ -35,9 +35,9 @@ export default function SelfServiceCard({
   }, []);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 hover:shadow-xl transition-shadow">
+    <div className="overflow-hidden rounded-xl border border-gray-200 transition-shadow hover:shadow-xl">
       <div className="flex items-center gap-x-4 border-b border-gray-900/5 bg-gray-50 p-6">
-        <div className="h-12 w-12 flex rounded-lg bg-white object-cover justify-center items-center ring-1 ring-gray-900/10">
+        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white object-cover ring-1 ring-gray-900/10">
           {getIcon(service.icon)}
         </div>
         <div className="text-sm font-medium leading-6 text-gray-900">
@@ -63,7 +63,7 @@ export default function SelfServiceCard({
                   <div
                     className={clsx(
                       active ? "bg-gray-50" : "",
-                      "block px-3 py-1 text-sm leading-6 text-gray-900"
+                      "block px-3 py-1 text-sm leading-6 text-gray-900",
                     )}
                     onClick={() => onViewRunsClicked(service.slug)}
                   >
@@ -76,7 +76,7 @@ export default function SelfServiceCard({
                   <div
                     className={clsx(
                       active ? "bg-gray-50" : "",
-                      "block px-3 py-1 text-sm leading-6 text-gray-900"
+                      "block px-3 py-1 text-sm leading-6 text-gray-900",
                     )}
                     onClick={() => onEditClicked(service.slug)}
                   >
@@ -94,10 +94,10 @@ export default function SelfServiceCard({
           <dd className="text-gray-700">{service.fields.length || "---"}</dd>
         </div>
       </dl>
-      <div className="flex py-3 px-6">
+      <div className="flex px-6 py-3">
         <p className="text-gray-700">{service.description}</p>
       </div>
-      <div className="flex justify-end py-4 px-6">
+      <div className="flex justify-end px-6 py-4">
         <Button
           type="button"
           color={ThemeColors.PRIMARY}

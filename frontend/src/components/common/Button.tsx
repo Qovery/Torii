@@ -39,9 +39,9 @@ export function Button({
       className={clsx(
         "inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold shadow-sm sm:ml-3 sm:w-auto",
         config[color],
-        disabled && "!bg-gray-300 !text-gray-400 cursor-not-allowed",
+        disabled && "cursor-not-allowed !bg-gray-300 !text-gray-400",
         flat && "!shadow-none",
-        props.className
+        props.className,
       )}
     >
       {loading ? <div>Loading...</div> : children}

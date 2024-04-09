@@ -17,11 +17,11 @@ export default function SelfServiceCatalog() {
   const setSelectedServiceSlug = useSetAtom(selectedServiceSlugAtom);
 
   const [createDialogOpened, setCreateDialogOpened] = useAtom(
-    dialogOpenedAtomFamily(DialogIds.CreateService)
+    dialogOpenedAtomFamily(DialogIds.CreateService),
   );
 
   const [editDialogOpened, setEditDialogOpened] = useAtom(
-    dialogOpenedAtomFamily(DialogIds.EditService)
+    dialogOpenedAtomFamily(DialogIds.EditService),
   );
 
   if (data.length === 0) {
@@ -52,7 +52,7 @@ export default function SelfServiceCatalog() {
       <ul role="list" className="space-y-6">
         {data.map((catalog) => (
           <li key={catalog.slug}>
-            <h2 className="text-xl font-bold mb-4">{catalog.name}</h2>
+            <h2 className="mb-4 text-xl font-bold">{catalog.name}</h2>
             <ul
               role="list"
               className="grid grid-cols-1 gap-x-6 gap-y-8 lg:grid-cols-3 xl:gap-x-8"

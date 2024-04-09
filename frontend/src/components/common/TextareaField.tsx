@@ -15,7 +15,7 @@ interface TextareaFieldProps
 const TextareaField = forwardRef(
   (
     { field, ...props }: TextareaFieldProps,
-    ref: ForwardedRef<HTMLTextAreaElement>
+    ref: ForwardedRef<HTMLTextAreaElement>,
   ) => {
     const { register, unregister } = useFormContext();
 
@@ -24,7 +24,7 @@ const TextareaField = forwardRef(
         unregister(field.slug);
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      []
+      [],
     );
 
     return (
@@ -57,7 +57,7 @@ const TextareaField = forwardRef(
         </div>
       </div>
     );
-  }
+  },
 );
 
 export default TextareaField;
