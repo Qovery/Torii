@@ -13,6 +13,7 @@ import Dialog from "../common/Dialog";
 import DyanmicFields from "../common/DynamicFields";
 import { Form } from "../common/Form";
 import { FormButtons } from "../common/FormButtons";
+import { useRef } from "react";
 
 export type ExecuteServicePayload = {
   name: string;
@@ -26,6 +27,11 @@ export function SelfServiceCreateDialog() {
   const setCreateDialogOpened = useSetAtom(
     dialogOpenedAtomFamily(DialogIds.CreateService)
   );
+
+  const initialFocus = {
+    name: "name",
+    ref: useRef(null),
+  };
 
   const form = useForm({
     resolver: yupResolver(
@@ -51,10 +57,14 @@ export function SelfServiceCreateDialog() {
     <Dialog
       id={DialogIds.CreateService}
       title={selectedService?.name as string}
+      initialFocus={initialFocus.ref}
       customFooter
     >
       <Form formRef={form} onSubmit={handleSubmit}>
-        <DyanmicFields fields={selectedService?.fields as Field[]} />
+        <DyanmicFields
+          fields={selectedService?.fields as Field[]}
+          initialFocus={initialFocus}
+        />
         <FormButtons
           valid={form.formState.isValid}
           onCancel={() => setCreateDialogOpened(false)}

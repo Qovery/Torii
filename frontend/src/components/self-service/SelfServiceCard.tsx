@@ -33,7 +33,7 @@ export default function SelfServiceCard({
   }, []);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200">
+    <div className="overflow-hidden rounded-xl border border-gray-200 hover:shadow-xl transition-shadow">
       <div className="flex items-center gap-x-4 border-b border-gray-900/5 bg-gray-50 p-6">
         <div className="h-12 w-12 flex rounded-lg bg-white object-cover justify-center items-center ring-1 ring-gray-900/10">
           {getIcon(service.icon)}

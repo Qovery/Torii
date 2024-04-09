@@ -10,6 +10,7 @@ import { Button } from "./Button";
 export interface DialogProps {
   id: DialogIds;
   title: string;
+  initialFocus?: React.MutableRefObject<HTMLElement | null>;
   children: ReactNode;
   customFooter?: boolean;
 }
@@ -35,6 +36,7 @@ export function DialogFooter({ onClose, onValidate }: DialogFooterProps) {
 export default function Dialog({
   id,
   title,
+  initialFocus,
   customFooter,
   children,
 }: DialogProps) {
@@ -46,7 +48,12 @@ export default function Dialog({
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
-      <HeadlessDialog as="div" className="relative z-10" onClose={setIsOpen}>
+      <HeadlessDialog
+        as="div"
+        className="relative z-10"
+        onClose={setIsOpen}
+        initialFocus={initialFocus}
+      >
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
