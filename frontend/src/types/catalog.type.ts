@@ -20,11 +20,11 @@ export type Field = {
   slug: string;
   title: string;
   description: string;
-  placeholder: string | null;
+  placeholder?: string;
   type: string;
-  default: string | null;
-  required: boolean | null;
-  autocomplete_fetcher: string | null;
+  default: string;
+  required: boolean;
+  autocomplete_fetcher: string;
 };
 
 export type Command = {

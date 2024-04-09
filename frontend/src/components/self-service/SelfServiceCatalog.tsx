@@ -1,4 +1,8 @@
-import { catalogsAtom, selectedServiceSlugAtom } from "@/atoms/catalog.atoms";
+import {
+  catalogsAtom,
+  selectedCatalogSlugAtom,
+  selectedServiceSlugAtom,
+} from "@/atoms/catalog.atoms";
 import { dialogOpenedAtomFamily } from "@/atoms/dialog.atoms";
 import EmptyState from "@/components/common/EmptyState.tsx";
 import SelfServiceCard from "@/components/self-service/SelfServiceCard.tsx";
@@ -11,6 +15,7 @@ export interface SelfServiceCatalog {}
 
 export default function SelfServiceCatalog() {
   const [{ data, status, error }] = useAtom(catalogsAtom);
+  const setSelectedCatalogSlug = useSetAtom(selectedCatalogSlugAtom);
   const setSelectedServiceSlug = useSetAtom(selectedServiceSlugAtom);
 
   const [createDialogOpened, setCreateDialogOpened] = useAtom(
@@ -32,33 +37,42 @@ export default function SelfServiceCatalog() {
     );
   }
 
-  const handleOnCreateClicked = (slug: string) => {
+  const handleOnCreateClicked = (serviceSlug: string, catalogSlug: string) => {
     setCreateDialogOpened(true);
-    setSelectedServiceSlug(slug);
+    setSelectedCatalogSlug(catalogSlug);
+    setSelectedServiceSlug(serviceSlug);
   };
 
-  const handleOnEditClicked = (slug: string) => {
+  const handleOnEditClicked = (serviceSlug: string, catalogSlug: string) => {
     setEditDialogOpened(true);
-    setSelectedServiceSlug(slug);
+    setSelectedCatalogSlug(catalogSlug);
+    setSelectedServiceSlug(serviceSlug);
   };
 
   return (
     <>
-      <ul
-        role="list"
-        className="grid grid-cols-1 gap-x-6 gap-y-8 lg:grid-cols-3 xl:gap-x-8"
-      >
-        {data.map((service) => (
-          <li key={service.slug}>
-            <SelfServiceCard
-              slug={service.slug}
-              title={service.name}
-              description={service.description}
-              serviceCount={service.services.length}
-              icon={null}
-              onCreateClicked={handleOnCreateClicked}
-              onEditClicked={handleOnEditClicked}
-            />
+      <ul role="list" className="space-y-6">
+        {data.map((catalog) => (
+          <li key={catalog.slug}>
+            <h2 className="text-xl font-bold mb-4">{catalog.name}</h2>
+            <ul
+              role="list"
+              className="grid grid-cols-1 gap-x-6 gap-y-8 lg:grid-cols-3 xl:gap-x-8"
+            >
+              {catalog.services.map((service) => (
+                <li key={service.slug}>
+                  <SelfServiceCard
+                    service={service}
+                    onCreateClicked={() =>
+                      handleOnCreateClicked(service.slug, catalog.slug)
+                    }
+                    onEditClicked={() =>
+                      handleOnEditClicked(service.slug, catalog.slug)
+                    }
+                  />
+                </li>
+              ))}
+            </ul>
           </li>
         ))}
       </ul>

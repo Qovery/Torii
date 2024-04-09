@@ -67,17 +67,18 @@ export default function Dialog({ id, title, children }: DialogProps) {
                 <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
                   <Button
                     type="button"
-                    color={ThemeColors.SECONDARY}
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Deactivate
-                  </Button>
-                  <Button
-                    type="button"
                     color={ThemeColors.PRIMARY}
                     onClick={() => setIsOpen(false)}
                   >
                     Validate
+                  </Button>
+                  <Button
+                    type="button"
+                    flat
+                    color={ThemeColors.PRIMARY}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Close
                   </Button>
                 </div>
               </HeadlessDialog.Panel>

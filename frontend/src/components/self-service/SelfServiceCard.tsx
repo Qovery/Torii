@@ -1,42 +1,50 @@
 import { ThemeColors } from "@/enums/theme-colors.enum";
+import { Service } from "@/types/catalog.type";
 import { Menu, Transition } from "@headlessui/react";
-import { EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
+import {
+  EllipsisHorizontalIcon,
+  PlusIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
 import clsx from "clsx";
-import { Fragment, ReactNode } from "react";
+import { Fragment, useCallback } from "react";
 import { Button } from "../common/Button";
 
 export interface SelfServiceCardProps {
-  slug: string;
-  title: string;
-  description: string;
-  serviceCount: number;
-  icon: ReactNode;
+  service: Service;
   onCreateClicked: (slug: string) => void;
   onEditClicked: (slug: string) => void;
 }
 
 export default function SelfServiceCard({
-  slug,
-  title,
-  description,
-  serviceCount,
-  icon,
+  service,
   onCreateClicked,
   onEditClicked,
 }: SelfServiceCardProps) {
+  const getIcon = useCallback((icon: string) => {
+    switch (icon?.toLowerCase()) {
+      case "target":
+        return <PlusIcon className="h-6 w-6" aria-hidden="true" />;
+      case "trash":
+        return <TrashIcon className="h-6 w-6" aria-hidden="true" />;
+      default:
+        return <PlusIcon className="h-6 w-6" aria-hidden="true" />;
+    }
+  }, []);
+
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 cursor-pointer">
       <div className="flex items-center gap-x-4 border-b border-gray-900/5 bg-gray-50 p-6">
-        <div className="h-12 w-12 flex-none rounded-lg bg-white object-cover ring-1 ring-gray-900/10">
-          {icon}
+        <div className="h-12 w-12 flex rounded-lg bg-white object-cover justify-center items-center ring-1 ring-gray-900/10">
+          {getIcon(service.icon)}
         </div>
         <div className="text-sm font-medium leading-6 text-gray-900">
-          {title}
+          {service.name}
         </div>
         <Menu as="div" className="relative ml-auto">
           <Menu.Button
             className="-m-2.5 block p-2.5 text-gray-400 hover:text-gray-500"
-            onClick={() => onEditClicked(slug)}
+            onClick={() => onEditClicked(service.slug)}
           >
             <span className="sr-only">Open options</span>
             <EllipsisHorizontalIcon className="h-5 w-5" aria-hidden="true" />
@@ -60,7 +68,7 @@ export default function SelfServiceCard({
                       "block px-3 py-1 text-sm leading-6 text-gray-900"
                     )}
                   >
-                    View<span className="sr-only">, {title}</span>
+                    View<span className="sr-only">, {service.name}</span>
                   </a>
                 )}
               </Menu.Item>
@@ -73,7 +81,7 @@ export default function SelfServiceCard({
                       "block px-3 py-1 text-sm leading-6 text-gray-900"
                     )}
                   >
-                    Edit<span className="sr-only">, {title}</span>
+                    Edit<span className="sr-only">, {service.name}</span>
                   </a>
                 )}
               </Menu.Item>
@@ -83,18 +91,18 @@ export default function SelfServiceCard({
       </div>
       <dl className="-my-3 divide-y divide-gray-100 px-6 py-4 text-sm leading-6">
         <div className="flex justify-between gap-x-4 py-3">
-          <dt className="text-gray-500">Services</dt>
-          <dd className="text-gray-700">{serviceCount || "---"}</dd>
+          <dt className="text-gray-500">Fields</dt>
+          <dd className="text-gray-700">{service.fields.length || "---"}</dd>
         </div>
       </dl>
       <div className="flex py-3 px-6">
-        <p className="text-gray-700">{description}</p>
+        <p className="text-gray-700">{service.description}</p>
       </div>
       <div className="flex justify-end py-4 px-6">
         <Button
           type="button"
           color={ThemeColors.PRIMARY}
-          onClick={() => onCreateClicked(slug)}
+          onClick={() => onCreateClicked(service.slug)}
         >
           Create
         </Button>
