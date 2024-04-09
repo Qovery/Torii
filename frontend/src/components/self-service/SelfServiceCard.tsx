@@ -1,84 +1,111 @@
-import {classNames} from "@/lib/utils.ts";
-import {TargetIcon} from "lucide-react";
-import {TrashIcon} from "@heroicons/react/24/outline";
+import { ThemeColors } from "@/enums/theme-colors.enum";
+import { Service } from "@/types/catalog.type";
+import { Menu, Transition } from "@headlessui/react";
+import {
+  EllipsisHorizontalIcon,
+  PlusIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
+import clsx from "clsx";
+import { Fragment, useCallback } from "react";
+import { Button } from "../common/Button";
 
-function getIcon(icon?: string): JSX.Element {
-  switch (icon?.toLowerCase()) {
-    case 'target':
-      return <TargetIcon className="h-6 w-6" aria-hidden="true"/>
-    case 'trash':
-      return <TrashIcon className="h-6 w-6" aria-hidden="true"/>
-    default:
-      return <TargetIcon className="h-6 w-6" aria-hidden="true"/>
-  }
+export interface SelfServiceCardProps {
+  service: Service;
+  onCreateClicked: (slug: string) => void;
+  onEditClicked: (slug: string) => void;
+  onViewRunsClicked: (slug: string) => void;
 }
 
-interface Props {
-  title: string;
-  description: string;
-  icon: string | undefined;
-  iconColor: string | undefined;
-  index: number;
-  totalCards: number;
-  onClick: () => void;
-}
-
-export default function SelfServiceCard({title, description, icon, iconColor, index, totalCards, onClick}: Props) {
-  let iconBackground = 'bg-indigo-50'
-  if (iconColor) {
-    iconBackground = `bg-${iconColor}-50`
-  }
-
-  let iconForeground = 'text-indigo-700'
-  if (iconColor) {
-    iconForeground = `text-${iconColor}-700`
-  }
-
-  const iconElement = getIcon(icon)
+export default function SelfServiceCard({
+  service,
+  onCreateClicked,
+  onEditClicked,
+  onViewRunsClicked,
+}: SelfServiceCardProps) {
+  const getIcon = useCallback((icon: string) => {
+    switch (icon?.toLowerCase()) {
+      case "target":
+        return <PlusIcon className="h-6 w-6" aria-hidden="true" />;
+      case "trash":
+        return <TrashIcon className="h-6 w-6" aria-hidden="true" />;
+      default:
+        return <PlusIcon className="h-6 w-6" aria-hidden="true" />;
+    }
+  }, []);
 
   return (
-    <div>
-      <div
-        key={title}
-        className={classNames(
-          index === 0 ? 'rounded-tl-lg rounded-tr-lg sm:rounded-tr-none' : '',
-          index === 1 ? 'sm:rounded-tr-lg' : '',
-          index === totalCards - 2 ? 'sm:rounded-bl-lg' : '',
-          index === totalCards - 1 ? 'rounded-bl-lg rounded-br-lg sm:rounded-bl-none' : '',
-          'group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-500'
-        )}
-      >
-        <div>
-            <span
-              className={classNames(
-                iconBackground,
-                iconForeground,
-                'inline-flex rounded-lg p-3 ring-4 ring-white'
-              )}
-            >
-            {iconElement}
-            </span>
+    <div className="overflow-hidden rounded-xl border border-gray-200 transition-shadow hover:shadow-xl">
+      <div className="flex items-center gap-x-4 border-b border-gray-900/5 bg-gray-50 p-6">
+        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white object-cover ring-1 ring-gray-900/10">
+          {getIcon(service.icon)}
         </div>
-        <div className="mt-8">
-          <h3 className="text-base font-semibold leading-6 text-gray-900">
-            <a href="#" className="focus:outline-none" onClick={onClick}>
-              <span className="absolute inset-0" aria-hidden="true"/>
-              {title}
-            </a>
-          </h3>
-          <p className="mt-2 text-sm text-gray-500">
-            {description}
-          </p>
+        <div className="text-sm font-medium leading-6 text-gray-900">
+          {service.name}
         </div>
-        <span
-          className="pointer-events-none absolute right-6 top-6 text-gray-300 group-hover:text-gray-400"
-          aria-hidden="true"
+        <Menu as="div" className="relative ml-auto">
+          <Menu.Button className="-m-2.5 block p-2.5 text-gray-400 hover:text-gray-500">
+            <span className="sr-only">Open options</span>
+            <EllipsisHorizontalIcon className="h-5 w-5" aria-hidden="true" />
+          </Menu.Button>
+          <Transition
+            as={Fragment}
+            enter="transition ease-out duration-100"
+            enterFrom="transform opacity-0 scale-95"
+            enterTo="transform opacity-100 scale-100"
+            leave="transition ease-in duration-75"
+            leaveFrom="transform opacity-100 scale-100"
+            leaveTo="transform opacity-0 scale-95"
+          >
+            <Menu.Items className="absolute right-0 z-10 mt-0.5 w-32 origin-top-right rounded-md bg-white py-2 shadow-lg ring-1 ring-gray-900/5 focus:outline-none">
+              <Menu.Item>
+                {({ active }) => (
+                  <div
+                    className={clsx(
+                      active ? "bg-gray-50" : "",
+                      "block px-3 py-1 text-sm leading-6 text-gray-900",
+                    )}
+                    onClick={() => onViewRunsClicked(service.slug)}
+                  >
+                    View<span className="sr-only">, {service.name}</span>
+                  </div>
+                )}
+              </Menu.Item>
+              <Menu.Item>
+                {({ active }) => (
+                  <div
+                    className={clsx(
+                      active ? "bg-gray-50" : "",
+                      "block px-3 py-1 text-sm leading-6 text-gray-900",
+                    )}
+                    onClick={() => onEditClicked(service.slug)}
+                  >
+                    Edit<span className="sr-only">, {service.name}</span>
+                  </div>
+                )}
+              </Menu.Item>
+            </Menu.Items>
+          </Transition>
+        </Menu>
+      </div>
+      <dl className="-my-3 divide-y divide-gray-100 px-6 py-4 text-sm leading-6">
+        <div className="flex justify-between gap-x-4 py-3">
+          <dt className="text-gray-500">Fields</dt>
+          <dd className="text-gray-700">{service.fields.length || "---"}</dd>
+        </div>
+      </dl>
+      <div className="flex px-6 py-3">
+        <p className="text-gray-700">{service.description}</p>
+      </div>
+      <div className="flex justify-end px-6 py-4">
+        <Button
+          type="button"
+          color={ThemeColors.PRIMARY}
+          onClick={() => onCreateClicked(service.slug)}
         >
-            <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M20 4h1a1 1 0 00-1-1v1zm-1 12a1 1 0 102 0h-2zM8 3a1 1 0 000 2V3zM3.293 19.293a1 1 0 101.414 1.414l-1.414-1.414zM19 4v12h2V4h-2zm1-1H8v2h12V3zm-.707.293l-16 16 1.414 1.414 16-16-1.414-1.414z"/>
-            </svg>
-          </span>
+          Create
+        </Button>
       </div>
     </div>
-  )
+  );
 }
