@@ -1,12 +1,12 @@
-import {Fragment} from 'react'
-import {Dialog, Transition} from '@headlessui/react'
-import {XMarkIcon} from '@heroicons/react/24/outline'
+import { Fragment } from "react";
+import { Dialog, Transition } from "@headlessui/react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import TextField from "@/components/self-service/fields/TextField.tsx";
 import TextareaField from "@/components/self-service/fields/TextareaField.tsx";
 import SwitchField from "@/components/self-service/fields/SwitchField.tsx";
-import {API_URL} from "@/config.ts";
+import { API_URL } from "@/config.ts";
 
-interface Props {
+export interface SelfServiceSlideOverProps {
   catalogSlug: string;
   service: any;
   onClose: () => void;
@@ -14,45 +14,57 @@ interface Props {
 
 function getField(field: any, onChange: (value: any) => void): JSX.Element {
   switch (field.type) {
-    case 'text':
-      return <TextField key={field.slug} field={field}/>
-    case 'number':
-      return <TextField key={field.slug} field={field} inputMode="numeric"/>
-    case 'textarea':
-      return <TextareaField key={field.slug} field={field}/>
-    case 'boolean':
-      return <SwitchField key={field.slug} field={field} onChange={(v) => onChange(v)}/>
+    case "text":
+      return <TextField key={field.slug} field={field} />;
+    case "number":
+      return <TextField key={field.slug} field={field} inputMode="numeric" />;
+    case "textarea":
+      return <TextareaField key={field.slug} field={field} />;
+    case "boolean":
+      return (
+        <SwitchField
+          key={field.slug}
+          field={field}
+          onChange={(v) => onChange(v)}
+        />
+      );
     default:
-      return <p>'{field.type}' is not a supported field</p>
+      return <p>'{field.type}' is not a supported field</p>;
   }
 }
 
-export default function SelfServiceSlideOver({catalogSlug, service, onClose}: Props): JSX.Element {
-
+export default function SelfServiceSlideOver({
+  catalogSlug,
+  service,
+  onClose,
+}: SelfServiceSlideOverProps): JSX.Element {
   const handleSubmit = (event: any) => {
-    event.preventDefault()
+    event.preventDefault();
 
-    const fields = []
+    const fields = [];
     for (const [id, value] of new FormData(event.target)) {
-      fields.push([id, value])
+      fields.push([id, value]);
     }
 
-    const payload = Object.fromEntries(fields)
+    const payload = Object.fromEntries(fields);
 
-    console.log({payload: payload})
+    console.log({ payload: payload });
 
-    fetch(`${API_URL}/catalogs/${catalogSlug}/services/${service.slug}/execute`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({payload: payload}),
-    }).then(
-      (res) => res.json(),
-    ).then((data) => {
-      console.log(data)
-    })
-  }
+    fetch(
+      `${API_URL}/catalogs/${catalogSlug}/services/${service.slug}/execute`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payload: payload }),
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+      });
+  };
 
   return (
     <Dialog as="div" className="relative z-10" onClose={onClose}>
@@ -65,7 +77,7 @@ export default function SelfServiceSlideOver({catalogSlug, service, onClose}: Pr
         leaveFrom="opacity-100"
         leaveTo="opacity-0"
       >
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"/>
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
       </Transition.Child>
 
       <div className="fixed inset-0 overflow-hidden">
@@ -81,7 +93,10 @@ export default function SelfServiceSlideOver({catalogSlug, service, onClose}: Pr
               leaveTo="translate-x-full"
             >
               <Dialog.Panel className="pointer-events-auto w-screen max-w-2xl">
-                <form className="flex h-full flex-col overflow-y-scroll bg-white shadow-xl" onSubmit={handleSubmit}>
+                <form
+                  className="flex h-full flex-col overflow-y-scroll bg-white shadow-xl"
+                  onSubmit={handleSubmit}
+                >
                   <div className="flex-1">
                     {/* Header */}
                     <div className="bg-gray-50 px-4 py-6 sm:px-6">
@@ -100,9 +115,9 @@ export default function SelfServiceSlideOver({catalogSlug, service, onClose}: Pr
                             className="relative text-gray-400 hover:text-gray-500"
                             onClick={() => onClose()}
                           >
-                            <span className="absolute -inset-2.5"/>
+                            <span className="absolute -inset-2.5" />
                             <span className="sr-only">Close panel</span>
-                            <XMarkIcon className="h-6 w-6" aria-hidden="true"/>
+                            <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                           </button>
                         </div>
                       </div>
@@ -112,8 +127,8 @@ export default function SelfServiceSlideOver({catalogSlug, service, onClose}: Pr
                     <div className="space-y-6 py-6 sm:space-y-0 sm:py-0">
                       {service.fields.map((field: any) => {
                         return getField(field, (value) => {
-                          console.log({field: field.slug, value: value})
-                        })
+                          console.log({ field: field.slug, value: value });
+                        });
                       })}
                     </div>
                   </div>
@@ -143,5 +158,5 @@ export default function SelfServiceSlideOver({catalogSlug, service, onClose}: Pr
         </div>
       </div>
     </Dialog>
-  )
+  );
 }
