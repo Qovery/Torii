@@ -27,7 +27,7 @@ const TextField = forwardRef(
     );
 
     return (
-      <div className="space-y-2 px-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:space-y-2 sm:px-6 sm:py-5">
+      <div className="space-y-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:space-y-2 sm:py-5">
         <div>
           <label
             htmlFor={field.slug}

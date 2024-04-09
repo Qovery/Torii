@@ -14,12 +14,14 @@ export interface SelfServiceCardProps {
   service: Service;
   onCreateClicked: (slug: string) => void;
   onEditClicked: (slug: string) => void;
+  onViewRunsClicked: (slug: string) => void;
 }
 
 export default function SelfServiceCard({
   service,
   onCreateClicked,
   onEditClicked,
+  onViewRunsClicked,
 }: SelfServiceCardProps) {
   const getIcon = useCallback((icon: string) => {
     switch (icon?.toLowerCase()) {
@@ -42,10 +44,7 @@ export default function SelfServiceCard({
           {service.name}
         </div>
         <Menu as="div" className="relative ml-auto">
-          <Menu.Button
-            className="-m-2.5 block p-2.5 text-gray-400 hover:text-gray-500"
-            onClick={() => onEditClicked(service.slug)}
-          >
+          <Menu.Button className="-m-2.5 block p-2.5 text-gray-400 hover:text-gray-500">
             <span className="sr-only">Open options</span>
             <EllipsisHorizontalIcon className="h-5 w-5" aria-hidden="true" />
           </Menu.Button>
@@ -61,28 +60,28 @@ export default function SelfServiceCard({
             <Menu.Items className="absolute right-0 z-10 mt-0.5 w-32 origin-top-right rounded-md bg-white py-2 shadow-lg ring-1 ring-gray-900/5 focus:outline-none">
               <Menu.Item>
                 {({ active }) => (
-                  <a
-                    href="#"
+                  <div
                     className={clsx(
                       active ? "bg-gray-50" : "",
                       "block px-3 py-1 text-sm leading-6 text-gray-900"
                     )}
+                    onClick={() => onViewRunsClicked(service.slug)}
                   >
                     View<span className="sr-only">, {service.name}</span>
-                  </a>
+                  </div>
                 )}
               </Menu.Item>
               <Menu.Item>
                 {({ active }) => (
-                  <a
-                    href="#"
+                  <div
                     className={clsx(
                       active ? "bg-gray-50" : "",
                       "block px-3 py-1 text-sm leading-6 text-gray-900"
                     )}
+                    onClick={() => onEditClicked(service.slug)}
                   >
                     Edit<span className="sr-only">, {service.name}</span>
-                  </a>
+                  </div>
                 )}
               </Menu.Item>
             </Menu.Items>

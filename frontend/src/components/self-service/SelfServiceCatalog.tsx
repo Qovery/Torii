@@ -12,7 +12,7 @@ import { SelfServiceCreateDialog } from "./SelfServiceCreateDialog";
 import { SelfServiceEditDialog } from "./SelfServiceEditDialog";
 
 export default function SelfServiceCatalog() {
-  const [{ data, status, error }] = useAtom(catalogsAtom);
+  const [{ data }] = useAtom(catalogsAtom);
   const setSelectedCatalogSlug = useSetAtom(selectedCatalogSlugAtom);
   const setSelectedServiceSlug = useSetAtom(selectedServiceSlugAtom);
 
@@ -67,6 +67,7 @@ export default function SelfServiceCatalog() {
                     onEditClicked={() =>
                       handleOnEditClicked(service.slug, catalog.slug)
                     }
+                    onViewRunsClicked={() => {}}
                   />
                 </li>
               ))}
