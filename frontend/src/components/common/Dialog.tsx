@@ -11,10 +11,38 @@ export interface DialogProps {
   id: DialogIds;
   title: string;
   children: ReactNode;
+  customFooter?: boolean;
 }
 
-export default function Dialog({ id, title, children }: DialogProps) {
+export interface DialogFooterProps {
+  onClose?: () => void;
+  onValidate?: () => void;
+}
+
+export function DialogFooter({ onClose, onValidate }: DialogFooterProps) {
+  return (
+    <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+      <Button type="button" color={ThemeColors.PRIMARY} onClick={onValidate}>
+        Validate
+      </Button>
+      <Button type="button" flat color={ThemeColors.PRIMARY} onClick={onClose}>
+        Close
+      </Button>
+    </div>
+  );
+}
+
+export default function Dialog({
+  id,
+  title,
+  customFooter,
+  children,
+}: DialogProps) {
   const [isOpen, setIsOpen] = useAtom(dialogOpenedAtomFamily(id));
+
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
@@ -64,23 +92,12 @@ export default function Dialog({ id, title, children }: DialogProps) {
                     <div className="mt-2">{children}</div>
                   </div>
                 </div>
-                <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
-                  <Button
-                    type="button"
-                    color={ThemeColors.PRIMARY}
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Validate
-                  </Button>
-                  <Button
-                    type="button"
-                    flat
-                    color={ThemeColors.PRIMARY}
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Close
-                  </Button>
-                </div>
+                {!customFooter && (
+                  <DialogFooter
+                    onClose={() => setIsOpen(false)}
+                    onValidate={() => setIsOpen(false)}
+                  />
+                )}
               </HeadlessDialog.Panel>
             </Transition.Child>
           </div>

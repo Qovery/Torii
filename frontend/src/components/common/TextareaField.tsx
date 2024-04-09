@@ -1,11 +1,22 @@
 import { Field } from "@/types/catalog.type";
-import { InputHTMLAttributes } from "react";
+import { InputHTMLAttributes, useEffect } from "react";
+import { useFormContext } from "react-hook-form";
 
 interface TextareaFieldProps extends InputHTMLAttributes<HTMLTextAreaElement> {
   field: Field;
 }
 
-export default function TextareaField({ field }: TextareaFieldProps) {
+export default function TextareaField({ field, ...props }: TextareaFieldProps) {
+  const { register, unregister } = useFormContext();
+
+  useEffect(
+    () => () => {
+      unregister(field.slug);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
   return (
     <div className="space-y-2 px-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:space-y-2 sm:px-6 sm:py-5">
       <div>
@@ -21,6 +32,8 @@ export default function TextareaField({ field }: TextareaFieldProps) {
       </div>
       <div className="sm:col-span-2">
         <textarea
+          {...register(field.slug)}
+          {...props}
           id={field.slug}
           name={field.slug}
           rows={3}

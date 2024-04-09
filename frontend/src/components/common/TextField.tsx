@@ -1,11 +1,22 @@
 import { Field } from "@/types/catalog.type";
-import { InputHTMLAttributes } from "react";
+import { InputHTMLAttributes, useEffect } from "react";
+import { useFormContext } from "react-hook-form";
 
 export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   field: Field;
 }
 
 export default function TextField({ field, ...props }: TextFieldProps) {
+  const { register, unregister } = useFormContext();
+
+  useEffect(
+    () => () => {
+      unregister(field.slug);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
   return (
     <div className="space-y-2 px-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:space-y-2 sm:px-6 sm:py-5">
       <div>
@@ -21,6 +32,8 @@ export default function TextField({ field, ...props }: TextFieldProps) {
       </div>
       <div className="sm:col-span-2">
         <input
+          {...register(field.slug)}
+          {...props}
           name={field.slug}
           id={field.slug}
           placeholder={field.placeholder}

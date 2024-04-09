@@ -26,8 +26,8 @@ export function Button({
     [key in ThemeColors]: string;
   } = {
     [ThemeColors.PRIMARY]: flat
-      ? "bg-transparent text-blue-500"
-      : "bg-blue-500 hover:bg-blue-700 text-white",
+      ? "bg-transparent text-indigo-500"
+      : "bg-indigo-500 hover:bg-indigo-700 text-white",
     [ThemeColors.SECONDARY]: flat
       ? "bg-transparent text-violet-500"
       : "bg-violet-500 hover:bg-violet-700 text-white",
@@ -39,7 +39,7 @@ export function Button({
       className={clsx(
         "inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold shadow-sm sm:ml-3 sm:w-auto",
         config[color],
-        disabled && "bg-gray-500 cursor-not-allowed",
+        disabled && "!bg-gray-300 !text-gray-400 cursor-not-allowed",
         flat && "!shadow-none",
         props.className
       )}

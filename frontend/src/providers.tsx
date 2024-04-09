@@ -23,8 +23,12 @@ export const Providers: React.FC<{
   return (
     <QueryClientProvider client={queryClient}>
       <JotaiProvider store={jotaiStore}>
-        <DevTools store={jotaiStore} />
-        <ReactQueryDevtools initialIsOpen={false} />
+        {process.env.NODE_ENV === "development" && (
+          <>
+            <DevTools store={jotaiStore} />
+            <ReactQueryDevtools initialIsOpen={false} />
+          </>
+        )}
         {children}
       </JotaiProvider>
     </QueryClientProvider>

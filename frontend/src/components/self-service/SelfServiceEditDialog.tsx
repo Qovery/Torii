@@ -1,11 +1,11 @@
-import { selectedServiceAtom } from "@/atoms/catalog.atoms";
 import { DialogIds } from "@/enums/dialog-ids.enum";
 import { useAtomValue } from "jotai";
 import Dialog from "../common/Dialog";
+import { selectedServiceAtom } from "@/atoms/service.atoms";
 
 export interface SelfServiceEditProps {}
 
-export function SelfServiceEdit() {
+export function SelfServiceEditDialog() {
   const selectedService = useAtomValue(selectedServiceAtom);
 
   return (

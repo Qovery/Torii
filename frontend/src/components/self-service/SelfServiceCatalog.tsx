@@ -8,10 +8,8 @@ import EmptyState from "@/components/common/EmptyState.tsx";
 import SelfServiceCard from "@/components/self-service/SelfServiceCard.tsx";
 import { DialogIds } from "@/enums/dialog-ids.enum";
 import { useAtom, useSetAtom } from "jotai";
-import { SelfServiceCreate } from "./SelfServiceCreate";
-import { SelfServiceEdit } from "./SelfServiceEdit";
-
-export interface SelfServiceCatalog {}
+import { SelfServiceCreateDialog } from "./SelfServiceCreateDialog";
+import { SelfServiceEditDialog } from "./SelfServiceEditDialog";
 
 export default function SelfServiceCatalog() {
   const [{ data, status, error }] = useAtom(catalogsAtom);
@@ -76,8 +74,8 @@ export default function SelfServiceCatalog() {
           </li>
         ))}
       </ul>
-      {createDialogOpened && <SelfServiceCreate />}
-      {editDialogOpened && <SelfServiceEdit />}
+      {createDialogOpened && <SelfServiceCreateDialog />}
+      {editDialogOpened && <SelfServiceEditDialog />}
     </>
   );
 }
