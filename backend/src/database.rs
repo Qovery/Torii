@@ -111,6 +111,22 @@ pub async fn list_catalog_runs_by_catalog_slug(
     )
 }
 
+pub async fn list_catalog_runs(
+    pg_pool: &Pool<Postgres>,
+) -> Result<Vec<CatalogRun>, QError> {
+    Ok(
+        sqlx::query_as::<_, CatalogRun>(
+            r#"
+            SELECT *
+            FROM catalog_runs
+            ORDER BY created_at DESC
+        "#
+        )
+            .fetch_all(pg_pool)
+            .await?
+    )
+}
+
 pub async fn insert_catalog_run(
     pg_pool: &Pool<Postgres>,
     catalog_slug: &str,

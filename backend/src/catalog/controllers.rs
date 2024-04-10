@@ -68,6 +68,21 @@ pub async fn list_catalog_runs_by_catalog_slug(
 }
 
 #[debug_handler]
+pub async fn list_catalog_runs(
+    Extension(pg_pool): Extension<Arc<sqlx::PgPool>>,
+) -> (StatusCode, Json<ResultsResponse<CatalogRunJson>>) {
+    match database::list_catalog_runs(&pg_pool).await {
+        Ok(catalog_execution_statuses) => {
+            (StatusCode::OK, Json(ResultsResponse { message: None, results: catalog_execution_statuses.iter().map(|x| x.to_json()).collect() }))
+        }
+        Err(err) => {
+            error!("failed to list catalog execution statuses: {:?}", err);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(ResultsResponse { message: Some(err.to_string()), results: vec![] }))
+        }
+    }
+}
+
+#[debug_handler]
 pub async fn exec_catalog_service_validate_scripts(
     Extension(yaml_config): Extension<Arc<YamlConfig>>,
     Path((catalog_slug, service_slug)): Path<(String, String)>,
