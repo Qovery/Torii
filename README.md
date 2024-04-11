@@ -24,36 +24,15 @@ That's it!
 
 ### Installation
 
-```bash
-cargo build
-
-# run the server
-cargo run
-```
-
-### Using containers 
-
-Build the container images using make for convenience
+Today you can run Torii using Docker Compose. In the future, we will provide a Helm chart to deploy Torii on Kubernetes and even locally.
 
 ```bash
-#From the root of the repository
-make docker_build_backend
-
-make docker_build_frontend
+docker compose up
 ```
 
 ## Usage
 
-To start Torii, run the following command:
-
-```bash
-torii --config ./config.yaml
-```
-
-Using docker compose 
-```bash
-docker compose up
-```
+Once Torii is started, you can access the frontend at `http://localhost:5173`. The backend is available at `http://localhost:9999`.
 
 ## Configuration
 

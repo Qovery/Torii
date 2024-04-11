@@ -1,13 +1,17 @@
 services:
   frontend:
-    image: torii-frontend:latest
-    ports: 
-      - "8080:80"
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
     depends_on:
       backend:
         condition: service_started
   backend:
-    image: torii-backend:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     restart: always
     command:
       --config /tmp/examples/config.yaml
@@ -17,3 +21,14 @@ services:
     - type: bind
       source: ./backend
       target: /tmp
+    depends_on:
+      postgres:
+        condition: service_healthy
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: torii
+    ports:
+      - 5432:5432

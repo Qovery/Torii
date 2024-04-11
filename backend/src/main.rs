@@ -69,6 +69,8 @@ async fn main() {
         }
     };
 
+    let server_port = env::var("PORT").unwrap_or("9999".to_string());
+
     let connection_string = env::var("DB_CONNECTION_URL")
         .unwrap_or("postgres://postgres:postgres@localhost:5432/torii".to_string());
 
@@ -123,7 +125,7 @@ async fn main() {
     //.route("/catalog/:id", get(catalog::get_catalog_by_id))
     //.route("/catalog", post(catalog::create_catalog));
 
-    let addr = "0.0.0.0:9999";
+    let addr = format!("0.0.0.0:{}", server_port);
     info!("Server listening on {}", addr);
 
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();

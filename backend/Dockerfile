@@ -1,23 +1,20 @@
-FROM rust:1.74.0-alpine3.18 as builder
+FROM rust:1.77.2-bookworm as builder
 
 WORKDIR /app
 
 COPY . .
 
-# Natively the compilation fails. We need this
-# source: https://github.com/ocaml/opam-repository/issues/13718#issuecomment-475550590
-RUN apk add --no-cache musl-dev
-
 RUN cargo build --release
 
-###
-###
-###
+# ---
 
-FROM scratch
+FROM debian:bookworm-slim
 
 WORKDIR /app
 
-COPY --from=builder /app/target/release/backend torii
+RUN apt update && apt install -y libssl-dev
 
-ENTRYPOINT ["/app/torii"]
+COPY --from=builder /app/target/release/backend torii
+COPY --from=builder /app/examples/config.yaml config.yaml
+
+ENTRYPOINT ["/app/torii", "-c", "/app/config.yaml"]
