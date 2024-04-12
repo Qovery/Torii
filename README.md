@@ -27,10 +27,10 @@ That's it!
 Today you can run Torii using Docker Compose. In the future, we will provide a Helm chart to deploy Torii on Kubernetes and even locally.
 
 ```bash
-docker compose up
+docker-compose up
 ```
 
-## Usage
+### Usage
 
 Once Torii is started, you can access the frontend at `http://localhost:5173`. The backend is available at `http://localhost:9999`.
 

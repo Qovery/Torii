@@ -38,7 +38,7 @@ async fn main() {
     // initialize tracing
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
-            env::var("RUST_LOG").unwrap_or_else(|_| "global_404_handler=info".into()),
+            env::var("RUST_LOG").unwrap_or_else(|_| "info".into()),
         ))
         .with(tracing_subscriber::fmt::layer())
         .init();
@@ -74,8 +74,10 @@ async fn main() {
     let connection_string = env::var("DB_CONNECTION_URL")
         .unwrap_or("postgres://postgres:postgres@localhost:5432/torii".to_string());
 
+    info!("connecting to database...");
     let pg_pool = match PgPoolOptions::new()
         .max_connections(5)
+        .acquire_timeout(std::time::Duration::from_secs(5))
         .connect(&connection_string).await {
         Ok(pool) => pool,
         Err(err) => {

@@ -12,9 +12,11 @@ FROM debian:bookworm-slim
 
 WORKDIR /app
 
-RUN apt update && apt install -y libssl-dev
+RUN apt update && apt install -y libssl-dev python3
+
+RUN ln -s /usr/bin/python3 /usr/bin/python
 
 COPY --from=builder /app/target/release/backend torii
-COPY --from=builder /app/examples/config.yaml config.yaml
+COPY --from=builder /app/examples examples
 
-ENTRYPOINT ["/app/torii", "-c", "/app/config.yaml"]
+ENTRYPOINT ["/app/torii"]

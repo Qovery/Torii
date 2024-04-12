@@ -1,10 +1,10 @@
-import { runsAtom } from "@/atoms/run.atoms";
+import {runsAtom} from "@/atoms/run.atoms";
 import EmptyState from "@/components/common/EmptyState.tsx";
 import SelfServiceRunTable from "@/components/self-service/SelfServiceRunTable.tsx";
-import { useAtom } from "jotai";
+import {useAtom} from "jotai";
 
 export default function SelfServiceRunSidebar() {
-  const [{ data, status, error }] = useAtom(runsAtom);
+  const [{data}] = useAtom(runsAtom);
 
   if (data.length === 0) {
     return (
