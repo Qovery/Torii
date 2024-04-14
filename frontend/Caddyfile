@@ -1,7 +1,14 @@
 *:80 {
-    root * dist/
+    root * /dist
+    encode gzip
 
-    file_server {
-        hide .git
+    # Handle SPA routes by rewriting all requests to index.html
+    @notStatic {
+        not path /static/*
+        file {
+            try_files {path} /index.html
+        }
     }
+
+    rewrite @notStatic /index.html
 }

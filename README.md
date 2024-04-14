@@ -112,7 +112,7 @@ if __name__ == '__main__':
 
 ### Validation Script
 
-An validation script can be any kind of script. It can be a bash script, a python script, a terraform script, etc. The script must exit with
+A validation script can be any kind of script. It can be a bash script, a python script, a terraform script, etc. The script must exit with
 a non-zero exit code if the validation fails.
 
 ```bash
@@ -170,27 +170,9 @@ use to build, deploy, and manage their applications.
 The Catalogs Service is a simple YAML file that contains the list of tools and services available to developers. It also contains the list
 of scripts to run to validate and submit the form.
 
-## How Torii works
+## Design
 
-Torii works with 2 main components:
-
-- Backend: The backend is a Rust application that exposes a REST API to interact with the frontend. It's configured with a YAML file that
-  contains the catalog of tools and services available to developers.
-- Frontend: The frontend is a React application that interacts with the backend to display the catalog of tools and services available to
-  developers.
-
-![Torii Architecture](./assets/diagram1.png)
-
-Once the backend is started, it loads the configuration file, checks the syntax, and starts the REST API. Then, the frontend can be started
-and it will interact with the backend to display the catalog of tools and services available to developers.
-
-When a developer wants to use a tool or service, the frontend sends a request to the backend to get the form to fill. The backend sends the
-form to the frontend, the developer fills it, and sends it back to the backend. The backend runs the validation scripts, the post-validation
-scripts, and updates the model with the values returned by the post-validation scripts.
-
-![Torii Sequence Diagram](./assets/diagram2.png)
-
-As a Platform Engineer, you can easily define a catalog of tools and services available to developers.
+Please refer to the [DESIGN.md](./DESIGN.md) file for more information.
 
 ## Contributing
 
@@ -201,11 +183,12 @@ contribution guidelines as soon as possible.
 
 Today you have the choice between three options to build your Internal Developer Portal:
 
-1. Use [Backstage](https://backstage.io) from Spotify. It's a great solution but it's hard to extend and customize. You need to be a
+1. Use [Backstage](https://backstage.io) from Spotify. It's a great solution, but it's hard to extend and customize. You need to be a
    TypeScript/React expert to extend it.
-2. Use a proprietary SaaS solution like Port, Cortex, OpsLevel, etc. It's a great solution but it's expensive and you don't have control
+2. Use a proprietary SaaS solution like Port, Cortex, OpsLevel, etc. It's a great solution, but it's expensive and you don't have control
    over the codebase.
-3. Build your own solution from scratch. It's a great solution but it's hard to maintain and scale. You need to be a full-stack developer to
+3. Build your own solution from scratch. It's a great solution, but it's hard to maintain and scale. You need to be a full-stack developer
+   to
    build it.
 
 Torii is a simple, powerful, and extensible open-source Internal Developer Portal that aims to be the best of all worlds. It's easy to

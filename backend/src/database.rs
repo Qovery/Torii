@@ -22,25 +22,25 @@ $$
     END
 $$;
 
--- create a new flat table to store catalog runs
-CREATE TABLE IF NOT EXISTS catalog_runs
+-- create a new flat table to store action runs
+CREATE TABLE IF NOT EXISTS self_service_runs
 (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
     created_at    TIMESTAMP        DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at    TIMESTAMP        DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    catalog_slug  VARCHAR(255)              NOT NULL,
-    service_slug  VARCHAR(255)              NOT NULL,
-    status        status                    NOT NULL,
-    input_payload JSONB DEFAULT '{}'::jsonb NOT NULL,
-    tasks         JSONB DEFAULT '{}'::jsonb NOT NULL
+    section_slug  VARCHAR(255)                               NOT NULL,
+    action_slug   VARCHAR(255)                               NOT NULL,
+    status        status                                     NOT NULL,
+    input_payload JSONB DEFAULT '{}'::jsonb                  NOT NULL,
+    tasks         JSONB DEFAULT '{}'::jsonb                  NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS catalog_runs_catalog_slug_idx ON catalog_runs (catalog_slug);
-CREATE INDEX IF NOT EXISTS catalog_runs_service_slug_idx ON catalog_runs (service_slug);
+CREATE INDEX IF NOT EXISTS self_service_runs_section_slug_idx ON self_service_runs (section_slug);
+CREATE INDEX IF NOT EXISTS self_service_runs_action_slug_idx ON self_service_runs (action_slug);
 "#;
 
 #[derive(sqlx::FromRow)]
-pub struct CatalogRun {
+pub struct SelfServiceRun {
     id: Uuid,
     created_at: chrono::NaiveDateTime,
     updated_at: chrono::NaiveDateTime,
@@ -62,14 +62,14 @@ pub enum Status {
     Failure,
 }
 
-impl CatalogRun {
-    pub fn to_json(&self) -> CatalogRunJson {
-        CatalogRunJson {
+impl SelfServiceRun {
+    pub fn to_json(&self) -> SelfServiceRunJson {
+        SelfServiceRunJson {
             id: self.id.to_string(),
             created_at: self.created_at.to_string(),
             updated_at: self.updated_at.to_string(),
-            catalog_slug: self.catalog_slug.clone(),
-            service_slug: self.service_slug.clone(),
+            section_slug: self.catalog_slug.clone(),
+            action_slug: self.service_slug.clone(),
             status: self.status.clone(),
             input_payload: self.input_payload.clone(),
             tasks: self.tasks.clone(),
@@ -82,12 +82,12 @@ impl CatalogRun {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct CatalogRunJson {
+pub struct SelfServiceRunJson {
     pub id: String,
     pub created_at: String,
     pub updated_at: String,
-    pub catalog_slug: String,
-    pub service_slug: String,
+    pub section_slug: String,
+    pub action_slug: String,
     pub status: Status,
     pub input_payload: serde_json::Value,
     pub tasks: serde_json::Value,
@@ -101,54 +101,54 @@ pub async fn init_database(pg_pool: &Pool<Postgres>) -> Result<(), QError> {
     Ok(())
 }
 
-pub async fn list_catalog_runs_by_catalog_and_service_slugs(
+pub async fn list_self_service_runs_by_section_and_action_slugs(
     pg_pool: &Pool<Postgres>,
-    catalog_slug: &str,
-    service_slug: &str,
-) -> Result<Vec<CatalogRun>, QError> {
+    section_slug: &str,
+    action_slug: &str,
+) -> Result<Vec<SelfServiceRun>, QError> {
     Ok(
-        sqlx::query_as::<_, CatalogRun>(
+        sqlx::query_as::<_, SelfServiceRun>(
             r#"
             SELECT *
-            FROM catalog_runs
-            WHERE catalog_slug = $1 AND service_slug = $2
+            FROM self_service_runs
+            WHERE section_slug = $1 AND action_slug = $2
             ORDER BY created_at DESC
         "#
         )
-            .bind(catalog_slug)
-            .bind(service_slug)
+            .bind(section_slug)
+            .bind(action_slug)
             .fetch_all(pg_pool)
             .await?
     )
 }
 
-pub async fn list_catalog_runs_by_catalog_slug(
+pub async fn list_self_service_runs_by_section_slug(
     pg_pool: &Pool<Postgres>,
-    catalog_slug: &str,
-) -> Result<Vec<CatalogRun>, QError> {
+    section_slug: &str,
+) -> Result<Vec<SelfServiceRun>, QError> {
     Ok(
-        sqlx::query_as::<_, CatalogRun>(
+        sqlx::query_as::<_, SelfServiceRun>(
             r#"
             SELECT *
-            FROM catalog_runs
-            WHERE catalog_slug = $1
+            FROM self_service_runs
+                WHERE section_slug = $1
             ORDER BY created_at DESC
         "#
         )
-            .bind(catalog_slug)
+            .bind(section_slug)
             .fetch_all(pg_pool)
             .await?
     )
 }
 
-pub async fn list_catalog_runs(
+pub async fn list_self_service_runs(
     pg_pool: &Pool<Postgres>,
-) -> Result<Vec<CatalogRun>, QError> {
+) -> Result<Vec<SelfServiceRun>, QError> {
     Ok(
-        sqlx::query_as::<_, CatalogRun>(
+        sqlx::query_as::<_, SelfServiceRun>(
             r#"
             SELECT *
-            FROM catalog_runs
+            FROM self_service_runs
             ORDER BY created_at DESC
         "#
         )
@@ -157,24 +157,24 @@ pub async fn list_catalog_runs(
     )
 }
 
-pub async fn insert_catalog_run(
+pub async fn insert_self_service_run(
     pg_pool: &Pool<Postgres>,
-    catalog_slug: &str,
-    service_slug: &str,
+    section_slug: &str,
+    action_slug: &str,
     status: Status,
     input_payload: &serde_json::Value,
     tasks: &serde_json::Value,
-) -> Result<CatalogRun, QError> {
+) -> Result<SelfServiceRun, QError> {
     Ok(
-        sqlx::query_as::<_, CatalogRun>(
+        sqlx::query_as::<_, SelfServiceRun>(
             r#"
-            INSERT INTO catalog_runs (catalog_slug, service_slug, status, input_payload, tasks)
+            INSERT INTO self_service_runs (section_slug, action_slug, status, input_payload, tasks)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING *
         "#
         )
-            .bind(catalog_slug)
-            .bind(service_slug)
+            .bind(section_slug)
+            .bind(action_slug)
             .bind(status)
             .bind(input_payload)
             .bind(tasks)
@@ -183,16 +183,16 @@ pub async fn insert_catalog_run(
     )
 }
 
-pub async fn update_catalog_run(
+pub async fn update_self_service_run(
     pg_pool: &Pool<Postgres>,
     id: &str,
     status: Status,
     tasks: &serde_json::Value,
-) -> Result<CatalogRun, QError> {
+) -> Result<SelfServiceRun, QError> {
     Ok(
-        sqlx::query_as::<_, CatalogRun>(
+        sqlx::query_as::<_, SelfServiceRun>(
             r#"
-            UPDATE catalog_runs
+            UPDATE self_service_runs
             SET status = $1, tasks = $2
             WHERE id = $3
             RETURNING *

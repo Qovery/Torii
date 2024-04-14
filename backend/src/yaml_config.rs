@@ -7,13 +7,25 @@ use crate::constants::DEFAULT_TIMEOUT_IN_SECONDS;
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub struct YamlConfig {
-    pub catalogs: Vec<CatalogYamlConfig>,
+    pub self_service: SelfServiceYamlConfig,
 }
 
 impl YamlConfig {
     pub fn validate(&self) -> Result<(), String> {
-        for catalog in &self.catalogs {
-            catalog.validate()?;
+        self.self_service.validate()
+    }
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "snake_case")]
+pub struct SelfServiceYamlConfig {
+    pub sections: Vec<SelfServiceSectionYamlConfig>,
+}
+
+impl SelfServiceYamlConfig {
+    pub fn validate(&self) -> Result<(), String> {
+        for section in &self.sections {
+            section.validate()?;
         }
 
         Ok(())
@@ -22,14 +34,14 @@ impl YamlConfig {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
-pub struct CatalogYamlConfig {
+pub struct SelfServiceSectionYamlConfig {
     pub slug: String,
     pub name: String,
     pub description: Option<String>,
-    pub services: Option<Vec<CatalogServiceYamlConfig>>,
+    pub actions: Option<Vec<SelfServiceSectionActionYamlConfig>>,
 }
 
-impl CatalogYamlConfig {
+impl SelfServiceSectionYamlConfig {
     pub fn validate(&self) -> Result<(), String> {
         let _ = validate_slug(&self.slug)?;
 
@@ -37,7 +49,7 @@ impl CatalogYamlConfig {
             return Err("name is empty".to_string());
         }
 
-        for service in self.services.as_ref().unwrap_or(&vec![]) {
+        for service in self.actions.as_ref().unwrap_or(&vec![]) {
             service.validate()?;
         }
 
@@ -47,7 +59,7 @@ impl CatalogYamlConfig {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
-pub struct CatalogServiceYamlConfig {
+pub struct SelfServiceSectionActionYamlConfig {
     pub slug: String,
     pub name: String,
     pub description: Option<String>,
@@ -58,7 +70,7 @@ pub struct CatalogServiceYamlConfig {
     pub post_validate: Option<Vec<CatalogServicePostValidateYamlConfig>>,
 }
 
-impl CatalogServiceYamlConfig {
+impl SelfServiceSectionActionYamlConfig {
     pub fn validate(&self) -> Result<(), String> {
         let _ = validate_slug(&self.slug)?;
 

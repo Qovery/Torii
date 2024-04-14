@@ -7,7 +7,7 @@ use tokio::process;
 use tokio::time::timeout;
 use tracing::debug;
 
-use crate::yaml_config::{CatalogServiceYamlConfig, CatalogYamlConfig, ExternalCommand, YamlConfig};
+use crate::yaml_config::{ExternalCommand, SelfServiceSectionActionYamlConfig, SelfServiceSectionYamlConfig, YamlConfig};
 
 pub mod controllers;
 pub mod services;
@@ -35,12 +35,12 @@ pub struct JobOutputResult {
     pub execution_time_in_millis: u128,
 }
 
-fn find_catalog_by_slug<'a>(catalogs: &'a Vec<CatalogYamlConfig>, catalog_slug: &str) -> Option<&'a CatalogYamlConfig> {
+fn find_catalog_by_slug<'a>(catalogs: &'a Vec<SelfServiceSectionYamlConfig>, catalog_slug: &str) -> Option<&'a SelfServiceSectionYamlConfig> {
     catalogs.iter().find(|catalog| catalog.slug == catalog_slug)
 }
 
-fn find_catalog_service_by_slug<'a>(catalog: &'a CatalogYamlConfig, service_slug: &str) -> Option<&'a CatalogServiceYamlConfig> {
-    catalog.services.as_ref().unwrap().iter().find(|service| service.slug == service_slug)
+fn find_catalog_service_by_slug<'a>(catalog: &'a SelfServiceSectionYamlConfig, service_slug: &str) -> Option<&'a SelfServiceSectionActionYamlConfig> {
+    catalog.actions.as_ref().unwrap().iter().find(|service| service.slug == service_slug)
 }
 
 /// Extract the job output from the environment variable TORII_JSON_OUTPUT and reset it to an empty JSON object
@@ -70,7 +70,7 @@ fn check_json_payload_against_yaml_config_fields(
     json_payload: &serde_json::Value,
     yaml_config: &YamlConfig,
 ) -> Result<(), String> {
-    let catalog = match find_catalog_by_slug(&yaml_config.catalogs, catalog_slug) {
+    let catalog = match find_catalog_by_slug(&yaml_config.self_service.sections, catalog_slug) {
         Some(catalog) => catalog,
         None => return Err(format!("Catalog '{}' not found", catalog_slug))
     };
@@ -157,8 +157,8 @@ fn get_catalog_and_service<'a>(
     yaml_config: &'a YamlConfig,
     catalog_slug: &str,
     service_slug: &str,
-) -> Result<(&'a CatalogYamlConfig, &'a CatalogServiceYamlConfig), (StatusCode, Json<JobResponse>)> {
-    let catalog = match find_catalog_by_slug(&yaml_config.catalogs, catalog_slug) {
+) -> Result<(&'a SelfServiceSectionYamlConfig, &'a SelfServiceSectionActionYamlConfig), (StatusCode, Json<JobResponse>)> {
+    let catalog = match find_catalog_by_slug(&yaml_config.self_service.sections, catalog_slug) {
         Some(catalog) => catalog,
         None => return Err((StatusCode::NOT_FOUND, Json(JobResponse {
             message: Some(format!("Catalog '{}' not found", catalog_slug)),
@@ -178,23 +178,23 @@ fn get_catalog_and_service<'a>(
 
 #[cfg(test)]
 mod tests {
-    use crate::catalog::{find_catalog_by_slug, find_catalog_service_by_slug};
-    use crate::yaml_config::{CatalogServiceYamlConfig, CatalogYamlConfig};
+    use crate::self_service::{find_catalog_by_slug, find_catalog_service_by_slug};
+    use crate::yaml_config::{SelfServiceSectionActionYamlConfig, SelfServiceSectionYamlConfig};
 
     #[test]
     fn test_find_catalog_by_slug() {
         let catalogs = vec![
-            CatalogYamlConfig {
+            SelfServiceSectionYamlConfig {
                 slug: "catalog-1".to_string(),
                 name: "Catalog 1".to_string(),
                 description: None,
-                services: None,
+                actions: None,
             },
-            CatalogYamlConfig {
+            SelfServiceSectionYamlConfig {
                 slug: "catalog-2".to_string(),
                 name: "Catalog 2".to_string(),
                 description: None,
-                services: None,
+                actions: None,
             },
         ];
 
@@ -205,12 +205,12 @@ mod tests {
 
     #[test]
     fn test_find_catalog_service_by_slug() {
-        let catalog = CatalogYamlConfig {
+        let catalog = SelfServiceSectionYamlConfig {
             slug: "catalog-1".to_string(),
             name: "Catalog 1".to_string(),
             description: None,
-            services: Some(vec![
-                CatalogServiceYamlConfig {
+            actions: Some(vec![
+                SelfServiceSectionActionYamlConfig {
                     slug: "service-1".to_string(),
                     name: "Service 1".to_string(),
                     description: None,
@@ -220,7 +220,7 @@ mod tests {
                     validate: None,
                     post_validate: None,
                 },
-                CatalogServiceYamlConfig {
+                SelfServiceSectionActionYamlConfig {
                     slug: "service-2".to_string(),
                     name: "Service 2".to_string(),
                     description: None,
@@ -233,8 +233,8 @@ mod tests {
             ]),
         };
 
-        assert_eq!(find_catalog_service_by_slug(&catalog, "service-1"), Some(&catalog.services.as_ref().unwrap()[0]));
-        assert_eq!(find_catalog_service_by_slug(&catalog, "service-2"), Some(&catalog.services.as_ref().unwrap()[1]));
+        assert_eq!(find_catalog_service_by_slug(&catalog, "service-1"), Some(&catalog.actions.as_ref().unwrap()[0]));
+        assert_eq!(find_catalog_service_by_slug(&catalog, "service-2"), Some(&catalog.actions.as_ref().unwrap()[1]));
         assert_eq!(find_catalog_service_by_slug(&catalog, "service-3"), None);
     }
 }

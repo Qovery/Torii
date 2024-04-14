@@ -1,89 +1,90 @@
-catalogs:
-  - slug: empty-catalog
-    name: Empty Catalog
-    description: Empty catalog
-    services: [ ]
-  - slug: default
-    name: Default
-    description: Default catalog
-    services:
-      - slug: new-testing-environment
-        name: New Testing Environment
-        description: spin up a temporary testing environment
-        icon: target
-        icon_color: teal
-        fields:
-          - slug: name
-            title: Name
-            description: provide a name for your environment
-            placeholder: testing-123
-            type: text
-            default: testing-123
-            required: true
-          - slug: description
-            title: Description
-            description: provide a description for your environment - what's good for?
-            type: textarea
-          - slug: ttl
-            title: TTL
-            description: Time to live for your environment (in hours)
-            placeholder: 24
-            type: number
-            required: true
-          - slug: seed
-            title: Seed
-            description: Do you want to seed your environment with some data?
-            type: boolean
-            default: true
-        validate:
-          - command:
-              - python
-              - examples/validation_script_ok.py # executed first
-            timeout: 60 # timeout in seconds
-          - command:
-              - bash
-              - examples/dumb_script_ok.sh # AND then this one
-        post_validate:
-          - command:
-              - python
-              - examples/validation_script_ok.py # executed first
-            timeout: 60 # timeout in seconds
-            output_model: string (optional) # model name
-          - command:
-              - bash
-              - examples/dumb_script_ok.sh # AND then this one
-            output_model: string (optional) # model name
-      - slug: stop-testing-environment
-        name: Stop Testing Environment
-        description: stop a testing environment
-        icon: trash
-        icon_color: rose
-        fields:
-          - slug: name
-            title: Name
-            description: provide a name for your environment
-            placeholder: testing-123
-            type: text
-            default: testing-123
-            required: true
-        validate:
-          - command:
-              - python
-              - examples/validation_script_ok.py # executed first
-            timeout: 60 # timeout in seconds
-          - command:
-              - bash
-              - examples/dumb_script_ok.sh # AND then this one
-        post_validate:
-          - command:
-              - python
-              - examples/validation_script_ok.py # executed first
-            timeout: 60 # timeout in seconds
-            output_model: string (optional) # model name
-          - command:
-              - bash
-              - examples/dumb_script_ok.sh # AND then this one
-            output_model: string (optional) # model name
+self_service:
+  sections:
+    - slug: empty-section
+      name: Empty Section
+      description: Empty section
+      actions: [ ]
+    - slug: default
+      name: Default
+      description: Default section
+      actions:
+        - slug: new-testing-environment
+          name: New Testing Environment
+          description: spin up a temporary testing environment
+          icon: target
+          icon_color: teal
+          fields:
+            - slug: name
+              title: Name
+              description: provide a name for your environment
+              placeholder: testing-123
+              type: text
+              default: testing-123
+              required: true
+            - slug: description
+              title: Description
+              description: provide a description for your environment - what's good for?
+              type: textarea
+            - slug: ttl
+              title: TTL
+              description: Time to live for your environment (in hours)
+              placeholder: 24
+              type: number
+              required: true
+            - slug: seed
+              title: Seed
+              description: Do you want to seed your environment with some data?
+              type: boolean
+              default: true
+          validate:
+            - command:
+                - python
+                - examples/validation_script_ok.py # executed first
+              timeout: 60 # timeout in seconds
+            - command:
+                - bash
+                - examples/dumb_script_ok.sh # AND then this one
+          post_validate:
+            - command:
+                - python
+                - examples/validation_script_ok.py # executed first
+              timeout: 60 # timeout in seconds
+              output_model: string (optional) # model name
+            - command:
+                - bash
+                - examples/dumb_script_ok.sh # AND then this one
+              output_model: string (optional) # model name
+        - slug: stop-testing-environment
+          name: Stop Testing Environment
+          description: stop a testing environment
+          icon: trash
+          icon_color: rose
+          fields:
+            - slug: name
+              title: Name
+              description: provide a name for your environment
+              placeholder: testing-123
+              type: text
+              default: testing-123
+              required: true
+          validate:
+            - command:
+                - python
+                - examples/validation_script_ok.py # executed first
+              timeout: 60 # timeout in seconds
+            - command:
+                - bash
+                - examples/dumb_script_ok.sh # AND then this one
+          post_validate:
+            - command:
+                - python
+                - examples/validation_script_ok.py # executed first
+              timeout: 60 # timeout in seconds
+              output_model: string (optional) # model name
+            - command:
+                - bash
+                - examples/dumb_script_ok.sh # AND then this one
+              output_model: string (optional) # model name
 models:
   - name: string
     description: string (optional)

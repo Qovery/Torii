@@ -6,25 +6,25 @@ use axum::http::StatusCode;
 use tokio::sync::mpsc::Sender;
 use tracing::error;
 
-use crate::catalog::{check_json_payload_against_yaml_config_fields, execute_command, ExecValidateScriptRequest, find_catalog_by_slug, get_catalog_and_service, JobResponse, ResultsResponse};
-use crate::catalog::services::BackgroundWorkerTask;
 use crate::database;
-use crate::database::{CatalogRunJson, insert_catalog_run, Status};
-use crate::yaml_config::{CatalogServiceYamlConfig, CatalogYamlConfig, YamlConfig};
+use crate::database::{insert_self_service_run, SelfServiceRunJson, Status};
+use crate::self_service::{check_json_payload_against_yaml_config_fields, execute_command, ExecValidateScriptRequest, find_catalog_by_slug, get_catalog_and_service, JobResponse, ResultsResponse};
+use crate::self_service::services::BackgroundWorkerTask;
+use crate::yaml_config::{SelfServiceSectionActionYamlConfig, SelfServiceSectionYamlConfig, YamlConfig};
 
 #[debug_handler]
-pub async fn list_catalogs(
+pub async fn list_self_service_sections(
     Extension(yaml_config): Extension<Arc<YamlConfig>>,
-) -> (StatusCode, Json<ResultsResponse<CatalogYamlConfig>>) {
-    (StatusCode::OK, Json(ResultsResponse { message: None, results: yaml_config.catalogs.clone() }))
+) -> (StatusCode, Json<ResultsResponse<SelfServiceSectionYamlConfig>>) {
+    (StatusCode::OK, Json(ResultsResponse { message: None, results: yaml_config.self_service.sections.clone() }))
 }
 
 #[debug_handler]
-pub async fn list_catalog_services(
+pub async fn list_self_service_section_actions(
     Extension(yaml_config): Extension<Arc<YamlConfig>>,
     Path(catalog_slug): Path<String>,
-) -> (StatusCode, Json<ResultsResponse<CatalogServiceYamlConfig>>) {
-    let catalog = match find_catalog_by_slug(&yaml_config.catalogs, catalog_slug.as_str()) {
+) -> (StatusCode, Json<ResultsResponse<SelfServiceSectionActionYamlConfig>>) {
+    let catalog = match find_catalog_by_slug(&yaml_config.self_service.sections, catalog_slug.as_str()) {
         Some(catalog) => catalog,
         None => return (StatusCode::NOT_FOUND, Json(ResultsResponse {
             message: Some(format!("Catalog '{}' not found", catalog_slug)),
@@ -32,15 +32,15 @@ pub async fn list_catalog_services(
         }))
     };
 
-    (StatusCode::OK, Json(ResultsResponse { message: None, results: catalog.services.clone().unwrap_or(vec![]) }))
+    (StatusCode::OK, Json(ResultsResponse { message: None, results: catalog.actions.clone().unwrap_or(vec![]) }))
 }
 
 #[debug_handler]
-pub async fn list_catalog_runs_by_catalog_and_service_slugs(
+pub async fn list_self_service_section_runs_by_section_and_action_slugs(
     Extension(pg_pool): Extension<Arc<sqlx::PgPool>>,
     Path((catalog_slug, service_slug)): Path<(String, String)>,
-) -> (StatusCode, Json<ResultsResponse<CatalogRunJson>>) {
-    match database::list_catalog_runs_by_catalog_and_service_slugs(&pg_pool, &catalog_slug, &service_slug).await {
+) -> (StatusCode, Json<ResultsResponse<SelfServiceRunJson>>) {
+    match database::list_self_service_runs_by_section_and_action_slugs(&pg_pool, &catalog_slug, &service_slug).await {
         Ok(catalog_execution_statuses) => {
             (StatusCode::OK, Json(ResultsResponse { message: None, results: catalog_execution_statuses.iter().map(|x| x.to_json()).collect() }))
         }
@@ -52,11 +52,11 @@ pub async fn list_catalog_runs_by_catalog_and_service_slugs(
 }
 
 #[debug_handler]
-pub async fn list_catalog_runs_by_catalog_slug(
+pub async fn list_self_service_section_runs_by_section_slug(
     Extension(pg_pool): Extension<Arc<sqlx::PgPool>>,
     Path(catalog_slug): Path<String>,
-) -> (StatusCode, Json<ResultsResponse<CatalogRunJson>>) {
-    match database::list_catalog_runs_by_catalog_slug(&pg_pool, &catalog_slug).await {
+) -> (StatusCode, Json<ResultsResponse<SelfServiceRunJson>>) {
+    match database::list_self_service_runs_by_section_slug(&pg_pool, &catalog_slug).await {
         Ok(catalog_execution_statuses) => {
             (StatusCode::OK, Json(ResultsResponse { message: None, results: catalog_execution_statuses.iter().map(|x| x.to_json()).collect() }))
         }
@@ -68,10 +68,10 @@ pub async fn list_catalog_runs_by_catalog_slug(
 }
 
 #[debug_handler]
-pub async fn list_catalog_runs(
+pub async fn list_self_service_section_runs(
     Extension(pg_pool): Extension<Arc<sqlx::PgPool>>,
-) -> (StatusCode, Json<ResultsResponse<CatalogRunJson>>) {
-    match database::list_catalog_runs(&pg_pool).await {
+) -> (StatusCode, Json<ResultsResponse<SelfServiceRunJson>>) {
+    match database::list_self_service_runs(&pg_pool).await {
         Ok(catalog_execution_statuses) => {
             (StatusCode::OK, Json(ResultsResponse { message: None, results: catalog_execution_statuses.iter().map(|x| x.to_json()).collect() }))
         }
@@ -83,7 +83,7 @@ pub async fn list_catalog_runs(
 }
 
 #[debug_handler]
-pub async fn exec_catalog_service_validate_scripts(
+pub async fn exec_self_service_section_validate_scripts(
     Extension(yaml_config): Extension<Arc<YamlConfig>>,
     Path((catalog_slug, service_slug)): Path<(String, String)>,
     Json(req): Json<ExecValidateScriptRequest>,
@@ -118,7 +118,7 @@ pub async fn exec_catalog_service_validate_scripts(
 }
 
 #[debug_handler]
-pub async fn exec_catalog_service_post_validate_scripts(
+pub async fn exec_self_service_section_post_validate_scripts(
     Extension(yaml_config): Extension<Arc<YamlConfig>>,
     Extension(tx): Extension<Sender<BackgroundWorkerTask>>,
     Extension(pg_pool): Extension<Arc<sqlx::PgPool>>,
@@ -142,7 +142,7 @@ pub async fn exec_catalog_service_post_validate_scripts(
         Err(err) => return err
     };
 
-    let ces = match insert_catalog_run(
+    let ces = match insert_self_service_run(
         &pg_pool,
         &catalog_slug,
         &service_slug,
@@ -177,70 +177,72 @@ mod tests {
     use axum::extract::Path;
     use axum::http::StatusCode;
 
-    use crate::catalog::controllers::exec_catalog_service_validate_scripts;
-    use crate::catalog::ExecValidateScriptRequest;
-    use crate::yaml_config::{CatalogFieldYamlConfig, CatalogServicePostValidateYamlConfig, CatalogServiceValidateYamlConfig, CatalogServiceYamlConfig, CatalogYamlConfig, YamlConfig};
+    use crate::self_service::controllers::exec_self_service_section_validate_scripts;
+    use crate::self_service::ExecValidateScriptRequest;
+    use crate::yaml_config::{CatalogFieldYamlConfig, CatalogServicePostValidateYamlConfig, CatalogServiceValidateYamlConfig, SelfServiceSectionActionYamlConfig, SelfServiceSectionYamlConfig, SelfServiceYamlConfig, YamlConfig};
     use crate::yaml_config::CatalogFieldType::Text;
 
     fn get_yaml_config() -> YamlConfig {
         YamlConfig {
-            catalogs: vec![
-                CatalogYamlConfig {
-                    slug: "catalog-1".to_string(),
-                    name: "Catalog 1".to_string(),
-                    description: None,
-                    services: Some(vec![
-                        CatalogServiceYamlConfig {
-                            slug: "service-1".to_string(),
-                            name: "Service 1".to_string(),
-                            description: None,
-                            icon: None,
-                            icon_color: None,
-                            fields: Some(vec![
-                                CatalogFieldYamlConfig {
-                                    slug: "field-1".to_string(),
-                                    title: "Field 1".to_string(),
-                                    description: None,
-                                    placeholder: None,
-                                    type_: Text,
-                                    default: None,
-                                    required: Some(true),
-                                    autocomplete_fetcher: None,
-                                },
-                                CatalogFieldYamlConfig {
-                                    slug: "field-2".to_string(),
-                                    title: "Field 2".to_string(),
-                                    description: None,
-                                    placeholder: None,
-                                    type_: Text,
-                                    default: None,
-                                    required: None,
-                                    autocomplete_fetcher: None,
-                                },
-                            ]),
-                            validate: Some(vec![
-                                CatalogServiceValidateYamlConfig {
-                                    timeout: None,
-                                    command: vec![
-                                        "python3".to_string(),
-                                        "examples/validation_script_ok.py".to_string(),
-                                    ],
-                                },
-                            ]),
-                            post_validate: Some(vec![
-                                CatalogServicePostValidateYamlConfig {
-                                    timeout: None,
-                                    command: vec![
-                                        "python3".to_string(),
-                                        "examples/validation_script_ok.py".to_string(),
-                                    ],
-                                    output_model: None,
-                                },
-                            ]),
-                        },
-                    ]),
-                },
-            ],
+            self_service: SelfServiceYamlConfig {
+                sections: vec![
+                    SelfServiceSectionYamlConfig {
+                        slug: "catalog-1".to_string(),
+                        name: "Catalog 1".to_string(),
+                        description: None,
+                        actions: Some(vec![
+                            SelfServiceSectionActionYamlConfig {
+                                slug: "service-1".to_string(),
+                                name: "Service 1".to_string(),
+                                description: None,
+                                icon: None,
+                                icon_color: None,
+                                fields: Some(vec![
+                                    CatalogFieldYamlConfig {
+                                        slug: "field-1".to_string(),
+                                        title: "Field 1".to_string(),
+                                        description: None,
+                                        placeholder: None,
+                                        type_: Text,
+                                        default: None,
+                                        required: Some(true),
+                                        autocomplete_fetcher: None,
+                                    },
+                                    CatalogFieldYamlConfig {
+                                        slug: "field-2".to_string(),
+                                        title: "Field 2".to_string(),
+                                        description: None,
+                                        placeholder: None,
+                                        type_: Text,
+                                        default: None,
+                                        required: None,
+                                        autocomplete_fetcher: None,
+                                    },
+                                ]),
+                                validate: Some(vec![
+                                    CatalogServiceValidateYamlConfig {
+                                        timeout: None,
+                                        command: vec![
+                                            "python3".to_string(),
+                                            "examples/validation_script_ok.py".to_string(),
+                                        ],
+                                    },
+                                ]),
+                                post_validate: Some(vec![
+                                    CatalogServicePostValidateYamlConfig {
+                                        timeout: None,
+                                        command: vec![
+                                            "python3".to_string(),
+                                            "examples/validation_script_ok.py".to_string(),
+                                        ],
+                                        output_model: None,
+                                    },
+                                ]),
+                            },
+                        ]),
+                    },
+                ],
+            }
         }
     }
 
@@ -248,7 +250,7 @@ mod tests {
     async fn test_exec_catalog_service_validate_scripts_ok() {
         let yaml_config = Arc::from(get_yaml_config());
 
-        let (status_code, job_response) = exec_catalog_service_validate_scripts(
+        let (status_code, job_response) = exec_self_service_section_validate_scripts(
             Extension(yaml_config),
             Path(("catalog-1".to_string(), "service-1".to_string())),
             Json(ExecValidateScriptRequest {
@@ -268,7 +270,7 @@ mod tests {
         let mut yaml_config = get_yaml_config();
 
         // add a failing validation script
-        yaml_config.catalogs[0].services.as_mut().unwrap()[0].validate.as_mut().unwrap().push(CatalogServiceValidateYamlConfig {
+        yaml_config.self_service.sections[0].actions.as_mut().unwrap()[0].validate.as_mut().unwrap().push(CatalogServiceValidateYamlConfig {
             timeout: None,
             command: vec![
                 "python3".to_string(),
@@ -276,7 +278,7 @@ mod tests {
             ],
         });
 
-        let (status_code, job_response) = exec_catalog_service_validate_scripts(
+        let (status_code, job_response) = exec_self_service_section_validate_scripts(
             Extension(Arc::from(yaml_config)),
             Path(("catalog-1".to_string(), "service-1".to_string())),
             Json(ExecValidateScriptRequest {

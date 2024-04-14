@@ -5,21 +5,21 @@ use sqlx::{Pool, Postgres};
 use tokio::sync::mpsc::Receiver;
 use tracing::error;
 
-use crate::catalog::{execute_command, ExecValidateScriptRequest, JobOutputResult};
-use crate::database::{Status, update_catalog_run};
-use crate::yaml_config::{CatalogServicePostValidateYamlConfig, CatalogServiceYamlConfig};
+use crate::database::{Status, update_self_service_run};
+use crate::self_service::{execute_command, ExecValidateScriptRequest, JobOutputResult};
+use crate::yaml_config::{CatalogServicePostValidateYamlConfig, SelfServiceSectionActionYamlConfig};
 
 #[derive(Serialize, Deserialize)]
 pub struct BackgroundWorkerTask {
     pub catalog_execution_status_id: String,
-    pub catalog_service_yaml_config: CatalogServiceYamlConfig,
+    pub catalog_service_yaml_config: SelfServiceSectionActionYamlConfig,
     pub req: ExecValidateScriptRequest,
 }
 
 impl BackgroundWorkerTask {
     pub fn new(
         catalog_execution_status_id: String,
-        catalog_service_yaml_config: CatalogServiceYamlConfig,
+        catalog_service_yaml_config: SelfServiceSectionActionYamlConfig,
         req: ExecValidateScriptRequest,
     ) -> Self {
         Self {
@@ -40,7 +40,7 @@ pub struct TaskPayload {
 
 pub async fn background_worker(mut rx: Receiver<BackgroundWorkerTask>, pg_pool: Arc<Pool<Postgres>>) {
     while let Some(task) = rx.recv().await {
-        let r = update_catalog_run(
+        let r = update_self_service_run(
             &pg_pool,
             task.catalog_execution_status_id.as_str(),
             Status::Running,
@@ -69,7 +69,7 @@ pub async fn background_worker(mut rx: Receiver<BackgroundWorkerTask>, pg_pool: 
 
                     let _ = tasks.push(task_payload);
 
-                    let _ = update_catalog_run(
+                    let _ = update_self_service_run(
                         &pg_pool,
                         task.catalog_execution_status_id.as_str(),
                         Status::Failure,
@@ -93,7 +93,7 @@ pub async fn background_worker(mut rx: Receiver<BackgroundWorkerTask>, pg_pool: 
 
             last_task_value = serde_json::to_value(tasks.clone()).unwrap();
 
-            let _ = update_catalog_run(
+            let _ = update_self_service_run(
                 &pg_pool,
                 task.catalog_execution_status_id.as_str(),
                 Status::Running,
@@ -101,7 +101,7 @@ pub async fn background_worker(mut rx: Receiver<BackgroundWorkerTask>, pg_pool: 
             ).await;
         }
 
-        let _ = update_catalog_run(
+        let _ = update_self_service_run(
             &pg_pool,
             task.catalog_execution_status_id.as_str(),
             Status::Success,

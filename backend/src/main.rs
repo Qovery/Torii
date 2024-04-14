@@ -13,10 +13,10 @@ use tracing::log::warn;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
-use crate::catalog::controllers::{exec_catalog_service_post_validate_scripts, exec_catalog_service_validate_scripts, list_catalog_runs, list_catalog_runs_by_catalog_and_service_slugs, list_catalog_runs_by_catalog_slug, list_catalog_services, list_catalogs};
-use crate::catalog::services::BackgroundWorkerTask;
 use crate::cli::CLI;
 use crate::database::init_database;
+use crate::self_service::controllers::{exec_self_service_section_post_validate_scripts, exec_self_service_section_validate_scripts, list_self_service_section_actions, list_self_service_section_runs, list_self_service_section_runs_by_section_and_action_slugs, list_self_service_section_runs_by_section_slug, list_self_service_sections};
+use crate::self_service::services::BackgroundWorkerTask;
 use crate::yaml_config::YamlConfig;
 
 mod yaml_config;
@@ -24,7 +24,7 @@ mod app_config;
 mod errors;
 mod cli;
 mod constants;
-mod catalog;
+mod self_service;
 mod database;
 
 pub async fn unknown_route(uri: Uri) -> (StatusCode, String) {
@@ -99,7 +99,7 @@ async fn main() {
     let (tx, rx) = tokio::sync::mpsc::channel::<BackgroundWorkerTask>(100);
 
     let _ = tokio::spawn(async move {
-        catalog::services::background_worker(rx, bgw_client).await;
+        self_service::services::background_worker(rx, bgw_client).await;
     });
 
     show_loaded_config(&yaml_config);
@@ -108,13 +108,13 @@ async fn main() {
         .fallback(unknown_route)
         .route("/", get(|| async { "OK" }))
         .route("/healthz", get(|| async { "OK" }))
-        .route("/catalogs", get(list_catalogs))
-        .route("/catalogs/runs", get(list_catalog_runs))
-        .route("/catalogs/:slug/services", get(list_catalog_services))
-        .route("/catalogs/:slug/runs", get(list_catalog_runs_by_catalog_slug))
-        .route("/catalogs/:slug/services/:slug/validate", post(exec_catalog_service_validate_scripts))
-        .route("/catalogs/:slug/services/:slug/execute", post(exec_catalog_service_post_validate_scripts))
-        .route("/catalogs/:slug/services/:slug/runs", get(list_catalog_runs_by_catalog_and_service_slugs))
+        .route("/selfServiceSections", get(list_self_service_sections))
+        .route("/selfServiceSections/runs", get(list_self_service_section_runs))
+        .route("/selfServiceSections/:slug/actions", get(list_self_service_section_actions))
+        .route("/selfServiceSections/:slug/runs", get(list_self_service_section_runs_by_section_slug))
+        .route("/selfServiceSections/:slug/actions/:slug/validate", post(exec_self_service_section_validate_scripts))
+        .route("/selfServiceSections/:slug/actions/:slug/execute", post(exec_self_service_section_post_validate_scripts))
+        .route("/selfServiceSections/:slug/actions/:slug/runs", get(list_self_service_section_runs_by_section_and_action_slugs))
         .layer(Extension(yaml_config))
         .layer(Extension(tx))
         .layer(Extension(pg_pool))
@@ -135,10 +135,10 @@ async fn main() {
 }
 
 fn show_loaded_config(yaml_config: &YamlConfig) {
-    for catalog in &yaml_config.catalogs {
-        info!("-> catalog '{}' loaded", catalog.slug);
-        for service in catalog.services.as_ref().unwrap_or(&vec![]) {
-            info!("\t|-> service '{}' loaded", service.slug);
+    for catalog in &yaml_config.self_service.sections {
+        info!("-> self-service section '{}' loaded", catalog.slug);
+        for service in catalog.actions.as_ref().unwrap_or(&vec![]) {
+            info!("\t|-> action '{}' loaded", service.slug);
         }
     }
 }
