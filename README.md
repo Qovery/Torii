@@ -15,6 +15,15 @@ That's it!
 
 > ⚠️ Torii is in active development and not ready for production yet.
 
+## Features
+
+| Feature          | Status              |
+|------------------|---------------------|
+| Self Service     | WIP                 |
+| Catalog Services | WIP                 |
+| Auth             | Not implemented yet |
+| Audit            | Not implemented yet |
+
 ## Getting Started
 
 ### Prerequisites
@@ -24,151 +33,295 @@ That's it!
 
 ### Installation
 
-Today you can run Torii using Docker Compose. In the future, we will provide a Helm chart to deploy Torii on Kubernetes and even locally.
+Today you can run Torii using Docker Compose. In the future, we will provide a Helm chart to deploy Torii on Kubernetes.
 
 ```bash
 docker-compose up
 ```
 
-### Usage
+If you want to run it locally you will need to start Postgres DB, the backend and the frontend separately.
 
-Once Torii is started, you can access the frontend at `http://localhost:5173`. The backend is available at `http://localhost:9999`.
+```bash
+# Start Postgres
+docker-compose -f docker-compose-dev.yaml up
+```
+
+```bash
+# Start the backend
+cd backend
+# you need to install Cargo (Rust) if you don't have it
+cargo run -- --config examples/config.yaml
+```
+
+When starting the backend - you should see the following output:
+
+```bash
+████████╗ ██████╗ ██████╗ ██╗██╗
+╚══██╔══╝██╔═══██╗██╔══██╗██║██║
+   ██║   ██║   ██║██████╔╝██║██║
+   ██║   ██║   ██║██╔══██╗██║██║
+   ██║   ╚██████╔╝██║  ██║██║██║
+   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝
+
+2024-04-14T17:38:07.667049Z  INFO backend: connecting to database...
+2024-04-14T17:38:07.756951Z  INFO backend: database initialized and up to date
+2024-04-14T17:38:07.757015Z  INFO backend: -> self-service section 'empty-section' loaded
+2024-04-14T17:38:07.757021Z  INFO backend: -> self-service section 'default' loaded
+2024-04-14T17:38:07.757026Z  INFO backend:      |-> action 'new-testing-environment' loaded
+2024-04-14T17:38:07.757033Z  INFO backend:      |-> action 'stop-testing-environment' loaded
+2024-04-14T17:38:07.758885Z  INFO backend: Server listening on 0.0.0.0:9999
+```
+
+```bash
+# Start the frontend
+cd frontend
+npm install
+npm run dev
+```
+
+You can now access:
+
+- the frontend at `http://localhost:3000`
+- the backend at `http://localhost:9999`
 
 ## Configuration
 
-### Configuration file
+### Simple Configuration
+
+Torii is configured with a YAML file that contains the self-service sections.
+A self-service section is a group of actions that developers can use to interact with tools and services.
+
+Here is an example of a simple configuration that will create a self-service section with a single action to create a new testing
+environment:
 
 ```yaml
-catalog:
-  - name: string
-    description: string (optional)
-    icon: url (optional)
-    fields:
-      - title: string
-        description: string (optional)
-        placeholder: string (optional)
-        type: string|integer|float|boolean|list
-        default: string (optional)
-        required: boolean
-        autocomplete-fetcher: ./your-script.py (optional)
-    validation:
-      - validation-script-1.sh # executed first
-      - validation-script-2.sh # AND then this one
-    post-validation:
-      - script: post-validation-script-1.sh # executed first
-        model: string (optional) # model name
-      - script: post-validation-script-2.sh # AND then this one
-        model: string (optional) # model name
-      - script: post-validation-script-3.sh # AND finally this one
-        model: string (optional) # model name
-models:
-  - name: string
-    description: string (optional)
-    fields:
-      - title: string
-        type: string|integer|float|boolean|list
-        default: string (optional)
-        required: boolean
+self_service:
+  sections:
+    - slug: default
+      name: Default
+      description: Default section
+      actions:
+        - slug: new-testing-environment
+          name: New Testing Environment
+          description: spin up a temporary testing environment
+          icon: target
+          fields:
+            - slug: name
+              title: Name
+              description: provide a name for your environment
+              placeholder: testing-123
+              type: text
+              default: testing-123
+              required: true
+            - slug: description
+              title: Description
+              description: provide a description for your environment - what's good for?
+              type: textarea
+            - slug: ttl
+              title: TTL
+              description: Time to live for your environment (in hours)
+              placeholder: 24
+              type: number
+              required: true
+            - slug: seed
+              title: Seed
+              description: Do you want to seed your environment with some data?
+              type: boolean
+              default: true
+          post_validate:
+            - command:
+                - python
+                - my-scripts/environment_management.py
+                - create
+                - --name
+                - {{name}} # this is a variable that will be replaced by the value of the field 'name'
+          delayed_command:
+            - command:
+                - python
+                - my-scripts/environment_management.py
+                - delete
+                - --name
+                - {{name}}
+              delay:
+                hours: {{ttl}} # this is a variable that will be replaced by the value of the field 'ttl'
 ```
 
-### Autocomplete Fetcher
+In this example, we define a self-service section with a single action called `new-testing-environment`. This action has four fields:
 
-An autocomplete fetcher is a script that must print a JSON on standard output. The JSON must contain a `results` key that contains a list of
-values.
+- `name`: a text field that is required
+- `description`: a textarea field
+- `ttl`: a number field that is required
+- `seed`: a boolean field with a default value of `true`
 
-```json
-{
-  "results": [
-    "val 1",
-    "val 2",
-    "val 3"
-  ]
-}
-```
+When the developer fills the form and submits it, Torii will run the `post_validate` script.
+If the script exits with a non-zero exit code, the action will fail.
+If the script exits with a zero exit code, Torii will run the `delayed_command` script after the specified delay.
 
-Example of autocomplete fetcher in python:
+[//]: # (### Advanced Configuration)
 
-```python
-import json
+[//]: # ()
 
+[//]: # (#### Autocomplete Fetcher)
 
-def get_data_from_fake_api():
-    return [
-        'val 1',
-        'val 2',
-        'val 3',
-    ]
+[//]: # ()
 
+[//]: # (An autocomplete fetcher is a script that must print a JSON on standard output. The JSON must contain a `results` key that contains a list of)
 
-if __name__ == '__main__':
-    # do your stuff here
-    results = get_data_from_fake_api()
+[//]: # (values.)
 
-    data = {'results': results}
+[//]: # ()
 
-    # print json on standard output
-    print(json.dumps(data))
-```
+[//]: # (```json)
 
-### Validation Script
+[//]: # ({)
 
-A validation script can be any kind of script. It can be a bash script, a python script, a terraform script, etc. The script must exit with
-a non-zero exit code if the validation fails.
+[//]: # (  "results": [)
 
-```bash
-#!/bin/bash
+[//]: # (    "val 1",)
 
-set -e # exit on error
-# print error on standard error output
+[//]: # (    "val 2",)
 
-# do your stuff here
-exit 0
-```
+[//]: # (    "val 3")
 
-### Post Validation Script
+[//]: # (  ])
 
-An post validation script can be any kind of script. It can be a bash script, a python script, a terraform script, etc.
+[//]: # (})
 
-- The script must exit with a non-zero exit code if the validation fails.
-- The script must be idempotent. It can be executed multiple times without side effects.
-- The output of the script must be a JSON that contains the defined model keys with their values. (Torii will update the model with
-  the values returned by the script)
+[//]: # (```)
 
-```json
-{
-  "status": "success",
-  "url": "https://my-service.com",
-  "username": "my-username",
-  "password": "my-password"
-}
-```
+[//]: # ()
 
-```bash
-#!/bin/bash
+[//]: # (Example of autocomplete fetcher in python:)
 
-set -e # exit on error
-# print error on standard error output
+[//]: # ()
 
-# do your stuff here
-exit 0
-```
+[//]: # (```python)
 
-## Features
+[//]: # (import json)
 
-| Feature          | Status              |
-|------------------|---------------------|
-| Catalogs Service | WIP                 |
-| Authentication   | Not implemented yet |
-| Authorization    | Not implemented yet |
-| Audit            | Not implemented yet |
+[//]: # ()
 
-### Catalogs Service
+[//]: # ()
 
-The Catalogs Service is the core of Torii. It allows Platform Engineers to define a catalog of tools and services that developers can
-use to build, deploy, and manage their applications.
+[//]: # (def get_data_from_fake_api&#40;&#41;:)
 
-The Catalogs Service is a simple YAML file that contains the list of tools and services available to developers. It also contains the list
-of scripts to run to validate and submit the form.
+[//]: # (    return [)
+
+[//]: # (        'val 1',)
+
+[//]: # (        'val 2',)
+
+[//]: # (        'val 3',)
+
+[//]: # (    ])
+
+[//]: # ()
+
+[//]: # ()
+
+[//]: # (if __name__ == '__main__':)
+
+[//]: # (    # do your stuff here)
+
+[//]: # (    results = get_data_from_fake_api&#40;&#41;)
+
+[//]: # ()
+
+[//]: # (    data = {'results': results})
+
+[//]: # ()
+
+[//]: # (    # print json on standard output)
+
+[//]: # (    print&#40;json.dumps&#40;data&#41;&#41;)
+
+[//]: # (```)
+
+[//]: # ()
+
+[//]: # (#### Validation Script)
+
+[//]: # ()
+
+[//]: # (A validation script can be any kind of script. It can be a bash script, a python script, a terraform script, etc. The script must exit with)
+
+[//]: # (a non-zero exit code if the validation fails.)
+
+[//]: # ()
+
+[//]: # (```bash)
+
+[//]: # (#!/bin/bash)
+
+[//]: # ()
+
+[//]: # (set -e # exit on error)
+
+[//]: # (# print error on standard error output)
+
+[//]: # ()
+
+[//]: # (# do your stuff here)
+
+[//]: # (exit 0)
+
+[//]: # (```)
+
+[//]: # ()
+
+[//]: # (#### Post Validation Script)
+
+[//]: # ()
+
+[//]: # (An post validation script can be any kind of script. It can be a bash script, a python script, a terraform script, etc.)
+
+[//]: # ()
+
+[//]: # (- The script must exit with a non-zero exit code if the validation fails.)
+
+[//]: # (- The script must be idempotent. It can be executed multiple times without side effects.)
+
+[//]: # (- The output of the script must be a JSON that contains the defined model keys with their values. &#40;Torii will update the model with)
+
+[//]: # (  the values returned by the script&#41;)
+
+[//]: # ()
+
+[//]: # (```json)
+
+[//]: # ({)
+
+[//]: # (  "status": "success",)
+
+[//]: # (  "url": "https://my-service.com",)
+
+[//]: # (  "username": "my-username",)
+
+[//]: # (  "password": "my-password")
+
+[//]: # (})
+
+[//]: # (```)
+
+[//]: # ()
+
+[//]: # (```bash)
+
+[//]: # (#!/bin/bash)
+
+[//]: # ()
+
+[//]: # (set -e # exit on error)
+
+[//]: # (# print error on standard error output)
+
+[//]: # ()
+
+[//]: # (# do your stuff here)
+
+[//]: # (exit 0)
+
+[//]: # (```)
 
 ## Design
 
