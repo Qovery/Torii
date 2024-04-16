@@ -15,7 +15,7 @@ use tracing_subscriber::util::SubscriberInitExt;
 
 use crate::cli::CLI;
 use crate::database::init_database;
-use crate::self_service::controllers::{exec_self_service_section_post_validate_scripts, exec_self_service_section_validate_scripts, list_self_service_section_actions, list_self_service_section_runs, list_self_service_section_runs_by_section_and_action_slugs, list_self_service_section_runs_by_section_slug, list_self_service_sections};
+use crate::self_service::controllers::{exec_self_service_section_action_post_validate_scripts, exec_self_service_section_action_validate_scripts, list_self_service_section_actions, list_self_service_section_runs, list_self_service_section_runs_by_section_and_action_slugs, list_self_service_section_runs_by_section_slug, list_self_service_sections};
 use crate::self_service::services::BackgroundWorkerTask;
 use crate::yaml_config::YamlConfig;
 
@@ -112,8 +112,8 @@ async fn main() {
         .route("/selfServiceSections/runs", get(list_self_service_section_runs))
         .route("/selfServiceSections/:slug/actions", get(list_self_service_section_actions))
         .route("/selfServiceSections/:slug/runs", get(list_self_service_section_runs_by_section_slug))
-        .route("/selfServiceSections/:slug/actions/:slug/validate", post(exec_self_service_section_validate_scripts))
-        .route("/selfServiceSections/:slug/actions/:slug/execute", post(exec_self_service_section_post_validate_scripts))
+        .route("/selfServiceSections/:slug/actions/:slug/validate", post(exec_self_service_section_action_validate_scripts))
+        .route("/selfServiceSections/:slug/actions/:slug/execute", post(exec_self_service_section_action_post_validate_scripts))
         .route("/selfServiceSections/:slug/actions/:slug/runs", get(list_self_service_section_runs_by_section_and_action_slugs))
         .layer(Extension(yaml_config))
         .layer(Extension(tx))
@@ -135,10 +135,10 @@ async fn main() {
 }
 
 fn show_loaded_config(yaml_config: &YamlConfig) {
-    for catalog in &yaml_config.self_service.sections {
-        info!("-> self-service section '{}' loaded", catalog.slug);
-        for service in catalog.actions.as_ref().unwrap_or(&vec![]) {
-            info!("\t|-> action '{}' loaded", service.slug);
+    for section in &yaml_config.self_service.sections {
+        info!("-> self-service section '{}' loaded", section.slug);
+        for action in section.actions.as_ref().unwrap_or(&vec![]) {
+            info!("\t|-> action '{}' loaded", action.slug);
         }
     }
 }

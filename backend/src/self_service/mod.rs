@@ -35,24 +35,24 @@ pub struct JobOutputResult {
     pub execution_time_in_millis: u128,
 }
 
-fn find_catalog_by_slug<'a>(catalogs: &'a Vec<SelfServiceSectionYamlConfig>, catalog_slug: &str) -> Option<&'a SelfServiceSectionYamlConfig> {
-    catalogs.iter().find(|catalog| catalog.slug == catalog_slug)
+fn find_self_service_section_by_slug<'a>(sections: &'a Vec<SelfServiceSectionYamlConfig>, section_slug: &str) -> Option<&'a SelfServiceSectionYamlConfig> {
+    sections.iter().find(|section| section.slug == section_slug)
 }
 
-fn find_catalog_service_by_slug<'a>(catalog: &'a SelfServiceSectionYamlConfig, service_slug: &str) -> Option<&'a SelfServiceSectionActionYamlConfig> {
-    catalog.actions.as_ref().unwrap().iter().find(|service| service.slug == service_slug)
+fn find_self_service_action_by_slug<'a>(section: &'a SelfServiceSectionYamlConfig, action_slug: &str) -> Option<&'a SelfServiceSectionActionYamlConfig> {
+    section.actions.as_ref().unwrap().iter().find(|action| action.slug == action_slug)
 }
 
 /// Extract the job output from the environment variable TORII_JSON_OUTPUT and reset it to an empty JSON object
-fn consume_job_output_result_from_json_output_env(service_slug: &str, execution_time: u128) -> JobOutputResult {
+fn consume_job_output_result_from_json_output_env(action_slug: &str, execution_time: u128) -> JobOutputResult {
     let job_output_result = match std::env::var("TORII_JSON_OUTPUT") {
         Ok(json_output) => JobOutputResult {
-            one_liner_command: service_slug.to_string(),
+            one_liner_command: action_slug.to_string(),
             output: serde_json::from_str(json_output.as_str()).unwrap_or(serde_json::json!({})),
             execution_time_in_millis: execution_time,
         },
         Err(_) => JobOutputResult {
-            one_liner_command: service_slug.to_string(),
+            one_liner_command: action_slug.to_string(),
             output: serde_json::json!({}),
             execution_time_in_millis: execution_time,
         }
@@ -65,24 +65,24 @@ fn consume_job_output_result_from_json_output_env(service_slug: &str, execution_
 }
 
 fn check_json_payload_against_yaml_config_fields(
-    catalog_slug: &str,
-    service_slug: &str,
+    section_slug: &str,
+    action_slug: &str,
     json_payload: &serde_json::Value,
     yaml_config: &YamlConfig,
 ) -> Result<(), String> {
-    let catalog = match find_catalog_by_slug(&yaml_config.self_service.sections, catalog_slug) {
-        Some(catalog) => catalog,
-        None => return Err(format!("Catalog '{}' not found", catalog_slug))
+    let section = match find_self_service_section_by_slug(&yaml_config.self_service.sections, section_slug) {
+        Some(section) => section,
+        None => return Err(format!("Self service section '{}' not found", section_slug))
     };
 
-    let service = match find_catalog_service_by_slug(catalog, service_slug) {
-        Some(service) => service,
-        None => return Err(format!("Service '{}' not found", service_slug))
+    let action = match find_self_service_action_by_slug(section, action_slug) {
+        Some(action) => action,
+        None => return Err(format!("Action '{}' not found", action_slug))
     };
 
-    let fields = match service.fields.as_ref() {
+    let fields = match action.fields.as_ref() {
         Some(fields) => fields,
-        None => return Err(format!("Service '{}' has no fields", service_slug))
+        None => return Err(format!("Action '{}' has no fields", action_slug))
     };
 
     for field in fields {
@@ -153,66 +153,66 @@ async fn execute_command<T>(
     Ok(consume_job_output_result_from_json_output_env(cmd_one_line.as_str(), start.elapsed().as_millis()))
 }
 
-fn get_catalog_and_service<'a>(
+fn get_self_service_section_and_action<'a>(
     yaml_config: &'a YamlConfig,
-    catalog_slug: &str,
-    service_slug: &str,
+    section_slug: &str,
+    action_slug: &str,
 ) -> Result<(&'a SelfServiceSectionYamlConfig, &'a SelfServiceSectionActionYamlConfig), (StatusCode, Json<JobResponse>)> {
-    let catalog = match find_catalog_by_slug(&yaml_config.self_service.sections, catalog_slug) {
-        Some(catalog) => catalog,
+    let section = match find_self_service_section_by_slug(&yaml_config.self_service.sections, section_slug) {
+        Some(section) => section,
         None => return Err((StatusCode::NOT_FOUND, Json(JobResponse {
-            message: Some(format!("Catalog '{}' not found", catalog_slug)),
+            message: Some(format!("Self service section '{}' not found", section_slug)),
         })))
     };
 
-    let service = match find_catalog_service_by_slug(catalog, service_slug) {
-        Some(service) => service,
+    let action = match find_self_service_action_by_slug(section, action_slug) {
+        Some(action) => action,
         None => return Err((StatusCode::NOT_FOUND, Json(JobResponse {
-            message: Some(format!("Service '{}' not found", service_slug)),
+            message: Some(format!("Action '{}' not found", action_slug)),
         })))
     };
 
-    Ok((catalog, service))
+    Ok((section, action))
 }
 
 
 #[cfg(test)]
 mod tests {
-    use crate::self_service::{find_catalog_by_slug, find_catalog_service_by_slug};
+    use crate::self_service::{find_self_service_action_by_slug, find_self_service_section_by_slug};
     use crate::yaml_config::{SelfServiceSectionActionYamlConfig, SelfServiceSectionYamlConfig};
 
     #[test]
-    fn test_find_catalog_by_slug() {
-        let catalogs = vec![
+    fn test_find_section_by_slug() {
+        let sections = vec![
             SelfServiceSectionYamlConfig {
-                slug: "catalog-1".to_string(),
-                name: "Catalog 1".to_string(),
+                slug: "section-1".to_string(),
+                name: "Section 1".to_string(),
                 description: None,
                 actions: None,
             },
             SelfServiceSectionYamlConfig {
-                slug: "catalog-2".to_string(),
-                name: "Catalog 2".to_string(),
+                slug: "section-2".to_string(),
+                name: "Section 2".to_string(),
                 description: None,
                 actions: None,
             },
         ];
 
-        assert_eq!(find_catalog_by_slug(&catalogs, "catalog-1"), Some(&catalogs[0]));
-        assert_eq!(find_catalog_by_slug(&catalogs, "catalog-2"), Some(&catalogs[1]));
-        assert_eq!(find_catalog_by_slug(&catalogs, "catalog-3"), None);
+        assert_eq!(find_self_service_section_by_slug(&sections, "section-1"), Some(&sections[0]));
+        assert_eq!(find_self_service_section_by_slug(&sections, "section-2"), Some(&sections[1]));
+        assert_eq!(find_self_service_section_by_slug(&sections, "section-3"), None);
     }
 
     #[test]
-    fn test_find_catalog_service_by_slug() {
-        let catalog = SelfServiceSectionYamlConfig {
-            slug: "catalog-1".to_string(),
-            name: "Catalog 1".to_string(),
+    fn test_find_action_by_slug() {
+        let section = SelfServiceSectionYamlConfig {
+            slug: "section-1".to_string(),
+            name: "Section 1".to_string(),
             description: None,
             actions: Some(vec![
                 SelfServiceSectionActionYamlConfig {
-                    slug: "service-1".to_string(),
-                    name: "Service 1".to_string(),
+                    slug: "action-1".to_string(),
+                    name: "Action 1".to_string(),
                     description: None,
                     icon: None,
                     icon_color: None,
@@ -221,8 +221,8 @@ mod tests {
                     post_validate: None,
                 },
                 SelfServiceSectionActionYamlConfig {
-                    slug: "service-2".to_string(),
-                    name: "Service 2".to_string(),
+                    slug: "action-2".to_string(),
+                    name: "Action 2".to_string(),
                     description: None,
                     icon: None,
                     icon_color: None,
@@ -233,8 +233,8 @@ mod tests {
             ]),
         };
 
-        assert_eq!(find_catalog_service_by_slug(&catalog, "service-1"), Some(&catalog.actions.as_ref().unwrap()[0]));
-        assert_eq!(find_catalog_service_by_slug(&catalog, "service-2"), Some(&catalog.actions.as_ref().unwrap()[1]));
-        assert_eq!(find_catalog_service_by_slug(&catalog, "service-3"), None);
+        assert_eq!(find_self_service_action_by_slug(&section, "action-1"), Some(&section.actions.as_ref().unwrap()[0]));
+        assert_eq!(find_self_service_action_by_slug(&section, "action-2"), Some(&section.actions.as_ref().unwrap()[1]));
+        assert_eq!(find_self_service_action_by_slug(&section, "action-3"), None);
     }
 }

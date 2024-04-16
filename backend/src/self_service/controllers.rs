@@ -8,7 +8,7 @@ use tracing::error;
 
 use crate::database;
 use crate::database::{insert_self_service_run, SelfServiceRunJson, Status};
-use crate::self_service::{check_json_payload_against_yaml_config_fields, execute_command, ExecValidateScriptRequest, find_catalog_by_slug, get_catalog_and_service, JobResponse, ResultsResponse};
+use crate::self_service::{check_json_payload_against_yaml_config_fields, execute_command, ExecValidateScriptRequest, find_self_service_section_by_slug, get_self_service_section_and_action, JobResponse, ResultsResponse};
 use crate::self_service::services::BackgroundWorkerTask;
 use crate::yaml_config::{SelfServiceSectionActionYamlConfig, SelfServiceSectionYamlConfig, YamlConfig};
 
@@ -22,30 +22,30 @@ pub async fn list_self_service_sections(
 #[debug_handler]
 pub async fn list_self_service_section_actions(
     Extension(yaml_config): Extension<Arc<YamlConfig>>,
-    Path(catalog_slug): Path<String>,
+    Path(section_slug): Path<String>,
 ) -> (StatusCode, Json<ResultsResponse<SelfServiceSectionActionYamlConfig>>) {
-    let catalog = match find_catalog_by_slug(&yaml_config.self_service.sections, catalog_slug.as_str()) {
-        Some(catalog) => catalog,
+    let section = match find_self_service_section_by_slug(&yaml_config.self_service.sections, section_slug.as_str()) {
+        Some(section) => section,
         None => return (StatusCode::NOT_FOUND, Json(ResultsResponse {
-            message: Some(format!("Catalog '{}' not found", catalog_slug)),
+            message: Some(format!("Self service section '{}' not found", section_slug)),
             results: vec![],
         }))
     };
 
-    (StatusCode::OK, Json(ResultsResponse { message: None, results: catalog.actions.clone().unwrap_or(vec![]) }))
+    (StatusCode::OK, Json(ResultsResponse { message: None, results: section.actions.clone().unwrap_or(vec![]) }))
 }
 
 #[debug_handler]
 pub async fn list_self_service_section_runs_by_section_and_action_slugs(
     Extension(pg_pool): Extension<Arc<sqlx::PgPool>>,
-    Path((catalog_slug, service_slug)): Path<(String, String)>,
+    Path((section_slug, action_slug)): Path<(String, String)>,
 ) -> (StatusCode, Json<ResultsResponse<SelfServiceRunJson>>) {
-    match database::list_self_service_runs_by_section_and_action_slugs(&pg_pool, &catalog_slug, &service_slug).await {
-        Ok(catalog_execution_statuses) => {
-            (StatusCode::OK, Json(ResultsResponse { message: None, results: catalog_execution_statuses.iter().map(|x| x.to_json()).collect() }))
+    match database::list_self_service_runs_by_section_and_action_slugs(&pg_pool, &section_slug, &action_slug).await {
+        Ok(action_execution_statuses) => {
+            (StatusCode::OK, Json(ResultsResponse { message: None, results: action_execution_statuses.iter().map(|x| x.to_json()).collect() }))
         }
         Err(err) => {
-            error!("failed to list catalog execution statuses: {:?}", err);
+            error!("failed to list action execution statuses: {:?}", err);
             (StatusCode::INTERNAL_SERVER_ERROR, Json(ResultsResponse { message: Some(err.to_string()), results: vec![] }))
         }
     }
@@ -54,14 +54,14 @@ pub async fn list_self_service_section_runs_by_section_and_action_slugs(
 #[debug_handler]
 pub async fn list_self_service_section_runs_by_section_slug(
     Extension(pg_pool): Extension<Arc<sqlx::PgPool>>,
-    Path(catalog_slug): Path<String>,
+    Path(section_slug): Path<String>,
 ) -> (StatusCode, Json<ResultsResponse<SelfServiceRunJson>>) {
-    match database::list_self_service_runs_by_section_slug(&pg_pool, &catalog_slug).await {
-        Ok(catalog_execution_statuses) => {
-            (StatusCode::OK, Json(ResultsResponse { message: None, results: catalog_execution_statuses.iter().map(|x| x.to_json()).collect() }))
+    match database::list_self_service_runs_by_section_slug(&pg_pool, &section_slug).await {
+        Ok(action_execution_statuses) => {
+            (StatusCode::OK, Json(ResultsResponse { message: None, results: action_execution_statuses.iter().map(|x| x.to_json()).collect() }))
         }
         Err(err) => {
-            error!("failed to list catalog execution statuses: {:?}", err);
+            error!("failed to list action execution statuses: {:?}", err);
             (StatusCode::INTERNAL_SERVER_ERROR, Json(ResultsResponse { message: Some(err.to_string()), results: vec![] }))
         }
     }
@@ -72,25 +72,25 @@ pub async fn list_self_service_section_runs(
     Extension(pg_pool): Extension<Arc<sqlx::PgPool>>,
 ) -> (StatusCode, Json<ResultsResponse<SelfServiceRunJson>>) {
     match database::list_self_service_runs(&pg_pool).await {
-        Ok(catalog_execution_statuses) => {
-            (StatusCode::OK, Json(ResultsResponse { message: None, results: catalog_execution_statuses.iter().map(|x| x.to_json()).collect() }))
+        Ok(self_service_runs) => {
+            (StatusCode::OK, Json(ResultsResponse { message: None, results: self_service_runs.iter().map(|x| x.to_json()).collect() }))
         }
         Err(err) => {
-            error!("failed to list catalog execution statuses: {:?}", err);
+            error!("failed to list action execution statuses: {:?}", err);
             (StatusCode::INTERNAL_SERVER_ERROR, Json(ResultsResponse { message: Some(err.to_string()), results: vec![] }))
         }
     }
 }
 
 #[debug_handler]
-pub async fn exec_self_service_section_validate_scripts(
+pub async fn exec_self_service_section_action_validate_scripts(
     Extension(yaml_config): Extension<Arc<YamlConfig>>,
-    Path((catalog_slug, service_slug)): Path<(String, String)>,
+    Path((section_slug, action_slug)): Path<(String, String)>,
     Json(req): Json<ExecValidateScriptRequest>,
 ) -> (StatusCode, Json<JobResponse>) {
     let _ = match check_json_payload_against_yaml_config_fields(
-        catalog_slug.as_str(),
-        service_slug.as_str(),
+        section_slug.as_str(),
+        action_slug.as_str(),
         &req.payload,
         &yaml_config,
     ) {
@@ -100,12 +100,12 @@ pub async fn exec_self_service_section_validate_scripts(
         }))
     };
 
-    let (_, service) = match get_catalog_and_service(&yaml_config, catalog_slug.as_str(), service_slug.as_str()) {
-        Ok((catalog, service)) => (catalog, service),
+    let (_, action) = match get_self_service_section_and_action(&yaml_config, section_slug.as_str(), action_slug.as_str()) {
+        Ok((section, action)) => (section, action),
         Err(err) => return err
     };
 
-    for cmd in service.validate.as_ref().unwrap_or(&vec![]) {
+    for cmd in action.validate.as_ref().unwrap_or(&vec![]) {
         let _ = match execute_command(cmd, req.payload.to_string().as_str()).await {
             Ok(_) => (),
             Err(err) => return (StatusCode::BAD_REQUEST, Json(JobResponse {
@@ -118,16 +118,16 @@ pub async fn exec_self_service_section_validate_scripts(
 }
 
 #[debug_handler]
-pub async fn exec_self_service_section_post_validate_scripts(
+pub async fn exec_self_service_section_action_post_validate_scripts(
     Extension(yaml_config): Extension<Arc<YamlConfig>>,
     Extension(tx): Extension<Sender<BackgroundWorkerTask>>,
     Extension(pg_pool): Extension<Arc<sqlx::PgPool>>,
-    Path((catalog_slug, service_slug)): Path<(String, String)>,
+    Path((section_slug, action_slug)): Path<(String, String)>,
     Json(req): Json<ExecValidateScriptRequest>,
 ) -> (StatusCode, Json<JobResponse>) {
     let _ = match check_json_payload_against_yaml_config_fields(
-        catalog_slug.as_str(),
-        service_slug.as_str(),
+        section_slug.as_str(),
+        action_slug.as_str(),
         &req.payload,
         &yaml_config,
     ) {
@@ -137,15 +137,15 @@ pub async fn exec_self_service_section_post_validate_scripts(
         }))
     };
 
-    let service = match get_catalog_and_service(&yaml_config, catalog_slug.as_str(), service_slug.as_str()) {
+    let service = match get_self_service_section_and_action(&yaml_config, section_slug.as_str(), action_slug.as_str()) {
         Ok((_, service)) => service,
         Err(err) => return err
     };
 
     let ces = match insert_self_service_run(
         &pg_pool,
-        &catalog_slug,
-        &service_slug,
+        &section_slug,
+        &action_slug,
         Status::Queued,
         &req.payload,
         &serde_json::Value::Array(vec![]),
@@ -177,28 +177,28 @@ mod tests {
     use axum::extract::Path;
     use axum::http::StatusCode;
 
-    use crate::self_service::controllers::exec_self_service_section_validate_scripts;
+    use crate::self_service::controllers::exec_self_service_section_action_validate_scripts;
     use crate::self_service::ExecValidateScriptRequest;
-    use crate::yaml_config::{CatalogFieldYamlConfig, CatalogServicePostValidateYamlConfig, CatalogServiceValidateYamlConfig, SelfServiceSectionActionYamlConfig, SelfServiceSectionYamlConfig, SelfServiceYamlConfig, YamlConfig};
-    use crate::yaml_config::CatalogFieldType::Text;
+    use crate::yaml_config::{SelfServiceSectionActionFieldYamlConfig, SelfServiceSectionActionPostValidateYamlConfig, SelfServiceSectionActionValidateYamlConfig, SelfServiceSectionActionYamlConfig, SelfServiceSectionYamlConfig, SelfServiceYamlConfig, YamlConfig};
+    use crate::yaml_config::ActionFieldType::Text;
 
     fn get_yaml_config() -> YamlConfig {
         YamlConfig {
             self_service: SelfServiceYamlConfig {
                 sections: vec![
                     SelfServiceSectionYamlConfig {
-                        slug: "catalog-1".to_string(),
-                        name: "Catalog 1".to_string(),
+                        slug: "section-1".to_string(),
+                        name: "Section 1".to_string(),
                         description: None,
                         actions: Some(vec![
                             SelfServiceSectionActionYamlConfig {
-                                slug: "service-1".to_string(),
-                                name: "Service 1".to_string(),
+                                slug: "action-1".to_string(),
+                                name: "Action 1".to_string(),
                                 description: None,
                                 icon: None,
                                 icon_color: None,
                                 fields: Some(vec![
-                                    CatalogFieldYamlConfig {
+                                    SelfServiceSectionActionFieldYamlConfig {
                                         slug: "field-1".to_string(),
                                         title: "Field 1".to_string(),
                                         description: None,
@@ -208,7 +208,7 @@ mod tests {
                                         required: Some(true),
                                         autocomplete_fetcher: None,
                                     },
-                                    CatalogFieldYamlConfig {
+                                    SelfServiceSectionActionFieldYamlConfig {
                                         slug: "field-2".to_string(),
                                         title: "Field 2".to_string(),
                                         description: None,
@@ -220,7 +220,7 @@ mod tests {
                                     },
                                 ]),
                                 validate: Some(vec![
-                                    CatalogServiceValidateYamlConfig {
+                                    SelfServiceSectionActionValidateYamlConfig {
                                         timeout: None,
                                         command: vec![
                                             "python3".to_string(),
@@ -229,7 +229,7 @@ mod tests {
                                     },
                                 ]),
                                 post_validate: Some(vec![
-                                    CatalogServicePostValidateYamlConfig {
+                                    SelfServiceSectionActionPostValidateYamlConfig {
                                         timeout: None,
                                         command: vec![
                                             "python3".to_string(),
@@ -247,12 +247,12 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_exec_catalog_service_validate_scripts_ok() {
+    async fn test_exec_self_service_action_validate_scripts_ok() {
         let yaml_config = Arc::from(get_yaml_config());
 
-        let (status_code, job_response) = exec_self_service_section_validate_scripts(
+        let (status_code, job_response) = exec_self_service_section_action_validate_scripts(
             Extension(yaml_config),
-            Path(("catalog-1".to_string(), "service-1".to_string())),
+            Path(("section-1".to_string(), "action-1".to_string())),
             Json(ExecValidateScriptRequest {
                 payload: serde_json::json!({
                 "field-1": "value-1",
@@ -266,11 +266,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_exec_catalog_service_validate_scripts_ko() {
+    async fn test_exec_self_service_action_validate_scripts_ko() {
         let mut yaml_config = get_yaml_config();
 
         // add a failing validation script
-        yaml_config.self_service.sections[0].actions.as_mut().unwrap()[0].validate.as_mut().unwrap().push(CatalogServiceValidateYamlConfig {
+        yaml_config.self_service.sections[0].actions.as_mut().unwrap()[0].validate.as_mut().unwrap().push(SelfServiceSectionActionValidateYamlConfig {
             timeout: None,
             command: vec![
                 "python3".to_string(),
@@ -278,9 +278,9 @@ mod tests {
             ],
         });
 
-        let (status_code, job_response) = exec_self_service_section_validate_scripts(
+        let (status_code, job_response) = exec_self_service_section_action_validate_scripts(
             Extension(Arc::from(yaml_config)),
-            Path(("catalog-1".to_string(), "service-1".to_string())),
+            Path(("section-1".to_string(), "action-1".to_string())),
             Json(ExecValidateScriptRequest {
                 payload: serde_json::json!({
                 "field-1": "value-1",
@@ -294,7 +294,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_exec_catalog_service_validate_scripts_timeout() {
+    async fn test_exec_self_service_action_validate_scripts_timeout() {
         // FIXME this test does not work because of tokio::test which is single threaded and does not allow to kill the child process
         // let mut yaml_config = get_yaml_config();
         //

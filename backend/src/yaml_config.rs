@@ -65,9 +65,9 @@ pub struct SelfServiceSectionActionYamlConfig {
     pub description: Option<String>,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
-    pub fields: Option<Vec<CatalogFieldYamlConfig>>,
-    pub validate: Option<Vec<CatalogServiceValidateYamlConfig>>,
-    pub post_validate: Option<Vec<CatalogServicePostValidateYamlConfig>>,
+    pub fields: Option<Vec<SelfServiceSectionActionFieldYamlConfig>>,
+    pub validate: Option<Vec<SelfServiceSectionActionValidateYamlConfig>>,
+    pub post_validate: Option<Vec<SelfServiceSectionActionPostValidateYamlConfig>>,
 }
 
 impl SelfServiceSectionActionYamlConfig {
@@ -135,12 +135,12 @@ pub trait ExternalCommand {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
-pub struct CatalogServiceValidateYamlConfig {
+pub struct SelfServiceSectionActionValidateYamlConfig {
     pub command: Vec<String>,
     pub timeout: Option<u64>,
 }
 
-impl ExternalCommand for CatalogServiceValidateYamlConfig {
+impl ExternalCommand for SelfServiceSectionActionValidateYamlConfig {
     fn get_command(&self) -> &Vec<String> {
         &self.command
     }
@@ -150,7 +150,7 @@ impl ExternalCommand for CatalogServiceValidateYamlConfig {
     }
 }
 
-impl Display for CatalogServiceValidateYamlConfig {
+impl Display for SelfServiceSectionActionValidateYamlConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let command = self.command.join(" ");
         write!(f, "{}", command)
@@ -159,13 +159,13 @@ impl Display for CatalogServiceValidateYamlConfig {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
-pub struct CatalogServicePostValidateYamlConfig {
+pub struct SelfServiceSectionActionPostValidateYamlConfig {
     pub command: Vec<String>,
     pub timeout: Option<u64>,
     pub output_model: Option<String>,
 }
 
-impl ExternalCommand for CatalogServicePostValidateYamlConfig {
+impl ExternalCommand for SelfServiceSectionActionPostValidateYamlConfig {
     fn get_command(&self) -> &Vec<String> {
         &self.command
     }
@@ -175,7 +175,7 @@ impl ExternalCommand for CatalogServicePostValidateYamlConfig {
     }
 }
 
-impl Display for CatalogServicePostValidateYamlConfig {
+impl Display for SelfServiceSectionActionPostValidateYamlConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let command = self.command.join(" ");
         write!(f, "{}", command)
@@ -184,19 +184,19 @@ impl Display for CatalogServicePostValidateYamlConfig {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
-pub struct CatalogFieldYamlConfig {
+pub struct SelfServiceSectionActionFieldYamlConfig {
     pub slug: String,
     pub title: String,
     pub description: Option<String>,
     pub placeholder: Option<String>,
     #[serde(rename = "type")]
-    pub type_: CatalogFieldType,
+    pub type_: ActionFieldType,
     pub default: Option<String>,
     pub required: Option<bool>,
     pub autocomplete_fetcher: Option<String>,
 }
 
-impl CatalogFieldYamlConfig {
+impl SelfServiceSectionActionFieldYamlConfig {
     pub fn validate(&self) -> Result<(), String> {
         let _ = validate_slug(&self.slug)?;
 
@@ -204,7 +204,7 @@ impl CatalogFieldYamlConfig {
             return Err("title is empty".to_string());
         }
 
-        if self.type_ == CatalogFieldType::List && self.autocomplete_fetcher.is_none() {
+        if self.type_ == ActionFieldType::List && self.autocomplete_fetcher.is_none() {
             return Err("autocomplete_fetcher is required for type List".to_string());
         }
 
@@ -214,7 +214,7 @@ impl CatalogFieldYamlConfig {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
-pub enum CatalogFieldType {
+pub enum ActionFieldType {
     Text,
     Textarea,
     Number,
