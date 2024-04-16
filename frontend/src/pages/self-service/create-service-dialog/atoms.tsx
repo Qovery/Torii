@@ -2,12 +2,14 @@ import { API_URL } from "@/config";
 import { Catalog, Service } from "@/types/catalog.type";
 import { atom } from "jotai";
 import { MutationOptions, atomWithMutation } from "jotai-tanstack-query";
+
+import { ExecuteServicePayload } from "./create-service-dialog";
+import { SELF_SERVICE } from "../atoms";
 import {
-  catalogsSwrAtom,
-  selectedCatalogSlugAtom,
   selectedServiceSlugAtom,
-} from "./catalog.atoms";
-import { ExecuteServicePayload } from "@/components/self-service/SelfServiceCreateDialog";
+  selectedCatalogSlugAtom,
+  catalogsSwrAtom,
+} from "../catalog-list/atoms";
 
 export const selectedServiceAtom = atom<Service | null>((get) => {
   const selectedServiceSlug = get(selectedServiceSlugAtom);
@@ -23,7 +25,7 @@ export const selectedServiceAtom = atom<Service | null>((get) => {
   }
 
   const catalog = catalogs.data.find(
-    (catalog: Catalog) => catalog.slug === selectedCatalogSlug
+    (catalog: Catalog) => catalog.slug === selectedCatalogSlug,
   );
 
   if (!catalog) {
@@ -31,8 +33,8 @@ export const selectedServiceAtom = atom<Service | null>((get) => {
   }
 
   return (
-    catalog.services.find(
-      (service: Service) => service.slug === selectedServiceSlug
+    catalog.actions.find(
+      (service: Service) => service.slug === selectedServiceSlug,
     ) || null
   );
 });
@@ -45,14 +47,14 @@ export const executeServiceMutation = atomWithMutation((get) => {
     mutationKey: ["executeService"],
     mutationFn: async (payload: ExecuteServicePayload) => {
       return fetch(
-        `${API_URL}/catalogs/${selectedCatalogSlug}/services/${selectedServiceSlug}/execute`,
+        `${API_URL}/${SELF_SERVICE}/${selectedCatalogSlug}/actions/${selectedServiceSlug}/execute`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ payload }),
-        }
+        },
       );
     },
   } as MutationOptions<any, unknown, ExecuteServicePayload, unknown>;

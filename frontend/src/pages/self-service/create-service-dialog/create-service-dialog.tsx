@@ -1,19 +1,16 @@
-import { dialogOpenedAtomFamily } from "@/atoms/dialog.atoms";
-import {
-  executeServiceMutation,
-  selectedServiceAtom,
-} from "@/atoms/service.atoms";
 import { DialogIds } from "@/enums/dialog-ids.enum";
 import { createDynamicSchema } from "@/lib/create-dynamic-schema";
 import { Field } from "@/types/catalog.type";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useForm } from "react-hook-form";
-import Dialog from "../common/Dialog";
-import DyanmicFields from "../common/DynamicFields";
-import { Form } from "../common/Form";
-import { FormButtons } from "../common/FormButtons";
+import Dialog from "@/components/Dialog";
+import DyanmicFields from "@/components/DynamicFields";
+import { Form } from "@/components/Form";
+import { FormButtons } from "@/components/FormButtons";
 import { useRef } from "react";
+import { executeServiceMutation, selectedServiceAtom } from "./atoms";
+import { dialogOpenedAtomFamily } from "@/pages/atoms";
 
 export type ExecuteServicePayload = {
   name: string;
@@ -22,7 +19,7 @@ export type ExecuteServicePayload = {
   seed: boolean;
 };
 
-export function SelfServiceCreateDialog() {
+export function CreateServiceDialog() {
   const selectedService = useAtomValue(selectedServiceAtom);
   const setCreateDialogOpened = useSetAtom(
     dialogOpenedAtomFamily(DialogIds.CreateService),

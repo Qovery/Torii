@@ -1,10 +1,10 @@
-import { pageTitleAtom } from "@/atoms/navigation.atoms";
+import { pageTitleAtom } from "@/pages/atoms";
 import { useSetAtom } from "jotai";
 import React, { useEffect } from "react";
 
 export function withPageTitle<T extends JSX.IntrinsicAttributes>(
   WrappedComponent: React.ComponentType<T>,
-  title: string
+  title: string,
 ) {
   return function WithPageTitle(props: T) {
     const setPageTitle = useSetAtom(pageTitleAtom);

@@ -1,4 +1,3 @@
-import { dialogOpenedAtomFamily } from "@/atoms/dialog.atoms";
 import { DialogIds } from "@/enums/dialog-ids.enum";
 import { ThemeColors } from "@/enums/theme-colors.enum";
 import { Dialog as HeadlessDialog, Transition } from "@headlessui/react";
@@ -6,6 +5,7 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useAtom } from "jotai";
 import { Fragment, ReactNode } from "react";
 import { Button } from "./Button";
+import { dialogOpenedAtomFamily } from "@/pages/atoms";
 
 export interface DialogProps {
   id: DialogIds;

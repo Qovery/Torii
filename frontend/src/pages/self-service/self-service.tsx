@@ -1,13 +1,15 @@
 import { withPageTitle } from "@/hoc/with-page-title";
 import { Provider } from "jotai";
 import { Suspense } from "react";
-import SelfServiceCatalog from "./SelfServiceCatalog";
+import CatalogList from "./catalog-list/catalog-list";
+import ServicesRunsSidebar from "./services-runs-sidebar/services-runs-sidebar";
 
 export function SelfService() {
   return (
     <Provider>
       <Suspense fallback={<div>Loading...</div>}>
-        <SelfServiceCatalog />
+        <CatalogList />
+        <ServicesRunsSidebar />
       </Suspense>
     </Provider>
   );

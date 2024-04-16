@@ -3,14 +3,14 @@ import ReactDOM from "react-dom/client";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import "./main.css";
 
-import AppShell from "@/components/AppShell.tsx";
-import SelfServiceWithTitle from "./components/self-service/SelfService";
+import SelfServiceWithTitle from "./pages/self-service/self-service";
 import { Providers } from "./providers";
+import App from "./pages/App";
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <AppShell />,
+    element: <App />,
     children: [
       {
         path: "/self-service",
@@ -25,5 +25,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <Providers>
       <RouterProvider router={router} />
     </Providers>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

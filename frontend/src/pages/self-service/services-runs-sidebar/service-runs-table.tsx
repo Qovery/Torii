@@ -55,7 +55,7 @@ interface Props {
   runs: any[];
 }
 
-export default function SelfServiceRunTable({ runs }: Props): JSX.Element {
+export default function ServiceRunsTable({ runs }: Props): JSX.Element {
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       <div className="mt-4 flow-root">

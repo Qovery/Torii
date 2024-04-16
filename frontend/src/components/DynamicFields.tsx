@@ -5,7 +5,6 @@ export interface DynamicFieldsProps {
   fields: Field[];
   initialFocus?: {
     name: string;
-    ref: React.MutableRefObject<HTMLInputElement | HTMLTextAreaElement | null>;
   };
 }
 

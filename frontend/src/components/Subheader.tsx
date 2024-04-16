@@ -1,9 +1,8 @@
-import { pageTitleAtom } from "@/atoms/navigation.atoms";
-import { useAtomValue } from "jotai";
+export interface SubheaderProps {
+  pageTitle: string;
+}
 
-export function Subheader() {
-  const pageTitle = useAtomValue(pageTitleAtom);
-
+export function Subheader({ pageTitle }: SubheaderProps) {
   return (
     <header>
       <div className="px-4 sm:px-6 lg:px-8">

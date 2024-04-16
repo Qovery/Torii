@@ -2,7 +2,7 @@ export type Catalog = {
   slug: string;
   name: string;
   description: string;
-  services: Service[];
+  actions: Service[];
 };
 
 export type Service = {

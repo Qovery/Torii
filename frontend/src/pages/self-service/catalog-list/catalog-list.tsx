@@ -1,27 +1,22 @@
+import EmptyState from "@/components/EmptyState";
+import { useAtom, useSetAtom } from "jotai";
+import { CreateServiceDialog } from "../create-service-dialog/create-service-dialog";
+import { DialogIds } from "@/enums/dialog-ids.enum";
+import { dialogOpenedAtomFamily } from "@/pages/atoms";
 import {
   catalogsAtom,
   selectedCatalogSlugAtom,
   selectedServiceSlugAtom,
-} from "@/atoms/catalog.atoms";
-import { dialogOpenedAtomFamily } from "@/atoms/dialog.atoms";
-import EmptyState from "@/components/common/EmptyState.tsx";
-import SelfServiceCard from "@/components/self-service/SelfServiceCard.tsx";
-import { DialogIds } from "@/enums/dialog-ids.enum";
-import { useAtom, useSetAtom } from "jotai";
-import { SelfServiceCreateDialog } from "./SelfServiceCreateDialog";
-import { SelfServiceEditDialog } from "./SelfServiceEditDialog";
+} from "./atoms";
+import ServiceCard from "./service-card";
 
-export default function SelfServiceCatalog() {
+export default function CatalogList() {
   const [{ data }] = useAtom(catalogsAtom);
   const setSelectedCatalogSlug = useSetAtom(selectedCatalogSlugAtom);
   const setSelectedServiceSlug = useSetAtom(selectedServiceSlugAtom);
 
   const [createDialogOpened, setCreateDialogOpened] = useAtom(
     dialogOpenedAtomFamily(DialogIds.CreateService),
-  );
-
-  const [editDialogOpened, setEditDialogOpened] = useAtom(
-    dialogOpenedAtomFamily(DialogIds.EditService),
   );
 
   if (data.length === 0) {
@@ -41,12 +36,6 @@ export default function SelfServiceCatalog() {
     setSelectedServiceSlug(serviceSlug);
   };
 
-  const handleOnEditClicked = (serviceSlug: string, catalogSlug: string) => {
-    setEditDialogOpened(true);
-    setSelectedCatalogSlug(catalogSlug);
-    setSelectedServiceSlug(serviceSlug);
-  };
-
   return (
     <>
       <ul role="list" className="space-y-6">
@@ -57,15 +46,12 @@ export default function SelfServiceCatalog() {
               role="list"
               className="grid grid-cols-1 gap-x-6 gap-y-8 lg:grid-cols-3 xl:gap-x-8"
             >
-              {catalog.services.map((service) => (
+              {catalog.actions.map((service) => (
                 <li key={service.slug}>
-                  <SelfServiceCard
+                  <ServiceCard
                     service={service}
                     onCreateClicked={() =>
                       handleOnCreateClicked(service.slug, catalog.slug)
-                    }
-                    onEditClicked={() =>
-                      handleOnEditClicked(service.slug, catalog.slug)
                     }
                     onViewRunsClicked={() => {}}
                   />
@@ -75,8 +61,7 @@ export default function SelfServiceCatalog() {
           </li>
         ))}
       </ul>
-      {createDialogOpened && <SelfServiceCreateDialog />}
-      {editDialogOpened && <SelfServiceEditDialog />}
+      {createDialogOpened && <CreateServiceDialog />}
     </>
   );
 }
