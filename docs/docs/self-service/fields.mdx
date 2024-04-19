@@ -50,34 +50,6 @@ fields:
           - autocomplete.py
 ```
 
-The autocomplete command should return a list of strings in a JSON array format into the environment variable `TORII_AUTOCOMPLETE_OUTPUT_<FIELD-SLUG>`:
-
-Example with a shell script:
-
-```bash
-export TORII_AUTOCOMPLETE_OUTPUT_APP_NAME='["This is value 1", "This is value 2", "This is value 3"]'
-```
-
-Example with python script:
-
-```python
-import os
-import sys
-import json
-
-if __name__ == '__main__':
-    input_value = sys.argv[1]
-
-    results = []
-
-    if len(input_value) > 3:
-        # fetch suggestion from web service / database / whatever and return values
-        # use input_value to filter the suggestions
-        results = ['This is value 1', 'This is value 2', 'This is value 3']
-
-    os.environ['TORII_AUTOCOMPLETE_OUTPUT_APP_NAME'] = json.dumps(results)
-```
-
 ### Textarea
 
 #### Properties
@@ -116,34 +88,6 @@ fields:
         command:
           - python
           - autocomplete.py
-```
-
-The autocomplete command should return a list of strings in a JSON array format into the environment variable `TORII_AUTOCOMPLETE_OUTPUT_<FIELD-SLUG>`:
-
-Example with a shell script:
-
-```bash
-export TORII_AUTOCOMPLETE_OUTPUT_APP_DESCRIPTION='["This is value 1", "This is value 2", "This is value 3"]'
-```
-
-Example with python script:
-
-```python
-import os
-import sys
-import json
-
-if __name__ == '__main__':
-    input_value = sys.argv[1]
-
-    results = []
-
-    if len(input_value) > 3:
-        # fetch suggestion from web service / database / whatever and return values
-        # use input_value to filter the suggestions
-        results = ['This is value 1', 'This is value 2', 'This is value 3']
-
-    os.environ['TORII_AUTOCOMPLETE_OUTPUT_APP_DESCRIPTION'] = json.dumps(results)
 ```
 
 ### Boolean
@@ -494,6 +438,8 @@ if __name__ == '__main__':
 
 ## Features
 
+Each field can have the following features:
+
 ### Autocomplete Field
 
 The autocomplete feature allows you to provide a list of suggestions to the user when they are filling out a field. This can be useful for fields that have a limited set of options.
@@ -501,6 +447,71 @@ The autocomplete feature allows you to provide a list of suggestions to the user
 Here is a list of important points to note about the autocomplete feature:
 - The command that is run for autocompletion should return a list of suggestions in a JSON array format into the environment variable `TORII_AUTOCOMPLETE_OUTPUT`.
 - The command will get the current value of the field as the first argument. This can be useful for filtering the suggestions based on the current value.
-- The timeout for the autocomplete command is in seconds.
 - If the autocomplete returns one suggestion, it will be automatically filled in the field.
 - If the autocomplete command is not provided, the field will not have autocomplete functionality.
+- If the command execution fails, the field will not have autocomplete functionality and the error will be logged.
+- If the command execution takes longer than the timeout, the field will not have autocomplete functionality and the error will be logged.
+- The command must return exit code 0 for a successful execution.
+
+A command need to be provided and must return a list of suggestions in a JSON array format into the environment variable `TORII_AUTOCOMPLETE_OUTPUT_<FIELD-SLUG>`
+
+#### Input
+
+The input JSON format for the autocomplete command is as follows:
+
+```json
+{
+  "value": "current value of the field",
+  "output_env_var": "TORII_AUTOCOMPLETE_OUTPUT_<FIELD-SLUG>"
+}
+```
+
+#### Output
+
+The output JSON format for the autocomplete command is as follows:
+
+```json
+{
+  "results": ["This is value 1", "This is value 2", "This is value 3"]
+}
+```
+
+Example with a shell script:
+
+```bash
+export TORII_AUTOCOMPLETE_OUTPUT_MY_FIELD_SLUG='{ "results": ["This is value 1", "This is value 2", "This is value 3"] }'
+```
+
+Example with python script:
+
+```python
+import os
+import sys
+import json
+
+if __name__ == '__main__':
+    input_json = json.loads(sys.argv[1])
+    input_value = input_json['value']
+
+    output = {
+        "results": []
+    }
+
+    if len(input_value) > 3:
+        # fetch suggestion from web service / database / whatever and return values
+        # use input_value to filter the suggestions
+        output["results"] = ['This is value 1', 'This is value 2', 'This is value 3']
+
+    # get the autocomplete env var key from the input json
+    # which is in the format TORII_AUTOCOMPLETE_OUTPUT_<FIELD-SLUG>
+    output_env_key = input_json['output_env_var']
+
+    # set the results in the environment variable with the JSON result
+    os.environ[output_env_key] = json.dumps(output)
+```
+
+:::note
+
+`Select` and `Multi Select` fields have different autocomplete command output format. Please refer to the respective field types for more information.
+
+:::
