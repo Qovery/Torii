@@ -1,0 +1,11 @@
+{
+  "position": 4,
+  "label": "Self Service",
+  "collapsible": true,
+  "collapsed": true,
+  "className": "red",
+  "link": {
+    "type": "generated-index",
+    "title": "Self Service"
+  }
+}

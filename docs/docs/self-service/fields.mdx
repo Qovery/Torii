@@ -1,0 +1,506 @@
+---
+sidebar_position: 2
+---
+
+# Fields
+
+Fields are the building blocks of a form. They define the type of data that the user can input. Each field has a set of properties that define how it behaves and what data it can accept.
+
+## Field Types
+
+Here are the different types of fields that are supported:
+
+### Text
+
+#### Properties
+
+| Prop                           | Type      | Required | Description                                               |
+|--------------------------------|-----------|----------|-----------------------------------------------------------|
+| `slug`                         | `string`  | Yes      | The slug of the field (must be unique within all fields). |
+| `type`                         | `string`  | Yes      | The type of the field.                                    |
+| `name`                         | `string`  | Yes      | The name of the field.                                    |
+| `description`                  | `string`  | No       | The description of the field.                             |
+| `required`                     | `boolean` | No       | Whether the field is required.                            |
+| `options.default`              | `string`  | No       | The default value of the field.                           |
+| `options.validate.regex`       | `string`  | No       | The regex pattern to validate the field.                  |
+| `options.validate.min-length`  | `number`  | No       | The minimum length of the field.                          |
+| `options.validate.max-length`  | `number`  | No       | The maximum length of the field.                          |
+| `options.autocomplete.timeout` | `number`  | No       | The timeout for the autocomplete command in seconds.      |
+| `options.autocomplete.command` | `array`   | No       | The command to run for autocompletion.                    |
+
+#### Example
+
+```yaml
+fields:
+  - slug: app_name
+    name: App Name
+    type: text
+    description: The app name
+    required: true
+    options:
+      default: Hello World
+      validate:
+        regex: ^[a-zA-Z0-9_]+$
+        min-length: 3
+        max-length: 20
+      autocomplete:
+        timeout: 30
+        command:
+          - python
+          - autocomplete.py
+```
+
+The autocomplete command should return a list of strings in a JSON array format into the environment variable `TORII_AUTOCOMPLETE_OUTPUT_<FIELD-SLUG>`:
+
+Example with a shell script:
+
+```bash
+export TORII_AUTOCOMPLETE_OUTPUT_APP_NAME='["This is value 1", "This is value 2", "This is value 3"]'
+```
+
+Example with python script:
+
+```python
+import os
+import sys
+import json
+
+if __name__ == '__main__':
+    input_value = sys.argv[1]
+
+    results = []
+
+    if len(input_value) > 3:
+        # fetch suggestion from web service / database / whatever and return values
+        # use input_value to filter the suggestions
+        results = ['This is value 1', 'This is value 2', 'This is value 3']
+
+    os.environ['TORII_AUTOCOMPLETE_OUTPUT_APP_NAME'] = json.dumps(results)
+```
+
+### Textarea
+
+#### Properties
+
+| Prop                           | Type      | Required | Description                                               |
+|--------------------------------|-----------|----------|-----------------------------------------------------------|
+| `slug`                         | `string`  | Yes      | The slug of the field (must be unique within all fields). |
+| `type`                         | `string`  | Yes      | The type of the field.                                    |
+| `name`                         | `string`  | Yes      | The name of the field.                                    |
+| `description`                  | `string`  | No       | The description of the field.                             |
+| `required`                     | `boolean` | No       | Whether the field is required.                            |
+| `options.default`              | `string`  | No       | The default value of the field.                           |
+| `options.validate.regex`       | `string`  | No       | The regex pattern to validate the field.                  |
+| `options.validate.min-length`  | `number`  | No       | The minimum length of the field.                          |
+| `options.validate.max-length`  | `number`  | No       | The maximum length of the field.                          |
+| `options.autocomplete.timeout` | `number`  | No       | The timeout for the autocomplete command in seconds.      |
+| `options.autocomplete.command` | `array`   | No       | The command to run for autocompletion.                    |
+
+#### Example
+
+```yaml
+fields:
+  - slug: app_description
+    name: App Description
+    type: textarea
+    description: The app description
+    required: false
+    options:
+      default: This is a sample app
+      validate:
+        regex: ^[a-zA-Z0-9_]+$
+        min-length: 3
+        max-length: 200
+      autocomplete:
+        timeout: 30
+        command:
+          - python
+          - autocomplete.py
+```
+
+The autocomplete command should return a list of strings in a JSON array format into the environment variable `TORII_AUTOCOMPLETE_OUTPUT_<FIELD-SLUG>`:
+
+Example with a shell script:
+
+```bash
+export TORII_AUTOCOMPLETE_OUTPUT_APP_DESCRIPTION='["This is value 1", "This is value 2", "This is value 3"]'
+```
+
+Example with python script:
+
+```python
+import os
+import sys
+import json
+
+if __name__ == '__main__':
+    input_value = sys.argv[1]
+
+    results = []
+
+    if len(input_value) > 3:
+        # fetch suggestion from web service / database / whatever and return values
+        # use input_value to filter the suggestions
+        results = ['This is value 1', 'This is value 2', 'This is value 3']
+
+    os.environ['TORII_AUTOCOMPLETE_OUTPUT_APP_DESCRIPTION'] = json.dumps(results)
+```
+
+### Boolean
+
+#### Properties
+
+| Prop                           | Type      | Required | Description                                               |
+|--------------------------------|-----------|----------|-----------------------------------------------------------|
+| `slug`                         | `string`  | Yes      | The slug of the field (must be unique within all fields). |
+| `type`                         | `string`  | Yes      | The type of the field.                                    |
+| `name`                         | `string`  | Yes      | The name of the field.                                    |
+| `description`                  | `string`  | No       | The description of the field.                             |
+| `required`                     | `boolean` | No       | Whether the field is required.                            |
+| `options.default`              | `boolean` | No       | The default value of the field.                           |
+| `options.autocomplete.timeout` | `number`  | No       | The timeout for the autocomplete command in seconds.      |
+| `options.autocomplete.command` | `array`   | No       | The command to run for autocompletion.                    |
+
+#### Example
+
+```yaml
+fields:
+  - slug: is_public
+    name: Is Public
+    type: boolean
+    description: Whether the app is public
+    required: true
+    options:
+      default: true
+      autocomplete:
+        timeout: 30
+        command:
+          - python
+          - autocomplete.py
+```
+
+### Integer
+
+#### Properties
+
+| Prop                           | Type      | Required | Description                                               |
+|--------------------------------|-----------|----------|-----------------------------------------------------------|
+| `slug`                         | `string`  | Yes      | The slug of the field (must be unique within all fields). |
+| `type`                         | `string`  | Yes      | The type of the field.                                    |
+| `name`                         | `string`  | Yes      | The name of the field.                                    |
+| `description`                  | `string`  | No       | The description of the field.                             |
+| `required`                     | `boolean` | No       | Whether the field is required.                            |
+| `options.default`              | `number`  | No       | The default value of the field.                           |
+| `options.validate.min`         | `number`  | No       | The minimum value of the field.                           |
+| `options.validate.max`         | `number`  | No       | The maximum value of the field.                           |
+| `options.autocomplete.timeout` | `number`  | No       | The timeout for the autocomplete command in seconds.      |
+| `options.autocomplete.command` | `array`   | No       | The command to run for autocompletion.                    |
+
+#### Example
+
+```yaml
+fields:
+  - slug: app_instances
+    name: App Instances
+    type: integer
+    description: The number of app instances
+    required: true
+    options:
+      default: 3
+      validate:
+        min: 1
+        max: 20
+      autocomplete:
+        timeout: 30
+        command:
+          - python
+          - autocomplete.py
+```
+
+### Float
+
+#### Properties
+
+| Prop                           | Type      | Required | Description                                               |
+|--------------------------------|-----------|----------|-----------------------------------------------------------|
+| `slug`                         | `string`  | Yes      | The slug of the field (must be unique within all fields). |
+| `type`                         | `string`  | Yes      | The type of the field.                                    |
+| `name`                         | `string`  | Yes      | The name of the field.                                    |
+| `description`                  | `string`  | No       | The description of the field.                             |
+| `required`                     | `boolean` | No       | Whether the field is required.                            |
+| `options.default`              | `number`  | No       | The default value of the field.                           |
+| `options.validate.min`         | `number`  | No       | The minimum value of the field.                           |
+| `options.validate.max`         | `number`  | No       | The maximum value of the field.                           |
+| `options.autocomplete.timeout` | `number`  | No       | The timeout for the autocomplete command in seconds.      |
+| `options.autocomplete.command` | `array`   | No       | The command to run for autocompletion.                    |
+
+#### Example
+
+```yaml
+fields:
+  - slug: app_price
+    name: App Price
+    type: float
+    description: The price of the app
+    required: true
+    options:
+      default: 10.99
+      validate:
+        min: 0.99
+        max: 100.00
+      autocomplete:
+        timeout: 30
+        command:
+          - python
+          - autocomplete.py
+```
+
+### Date
+
+#### Properties
+
+| Prop                           | Type      | Required | Description                                               |
+|--------------------------------|-----------|----------|-----------------------------------------------------------|
+| `slug`                         | `string`  | Yes      | The slug of the field (must be unique within all fields). |
+| `type`                         | `string`  | Yes      | The type of the field.                                    |
+| `name`                         | `string`  | Yes      | The name of the field.                                    |
+| `description`                  | `string`  | No       | The description of the field.                             |
+| `required`                     | `boolean` | No       | Whether the field is required.                            |
+| `options.default`              | `string`  | No       | The default value (YYYY-MM-DD) of the field.              |
+| `options.validate.min`         | `string`  | No       | The minimum value (YYYY-MM-DD) of the field.              |
+| `options.validate.max`         | `string`  | No       | The maximum value (YYYY-MM-DD) of the field.              |
+| `options.autocomplete.timeout` | `number`  | No       | The timeout for the autocomplete command in seconds.      |
+| `options.autocomplete.command` | `array`   | No       | The command to run for autocompletion.                    |
+
+#### Example
+
+```yaml
+fields:
+  - slug: app_release_date
+    name: App Release Date
+    type: date
+    description: The release date of the app
+    required: true
+    options:
+      default: 2022-01-01
+      validate:
+        min: 2021-01-01 | now
+        max: 2023-01-01 | 1 day/week/month/year
+      autocomplete:
+        timeout: 30
+        command:
+          - python
+          - autocomplete.py
+```
+
+### Datetime
+
+#### Properties
+
+| Prop                           | Type      | Required | Description                                               |
+|--------------------------------|-----------|----------|-----------------------------------------------------------|
+| `slug`                         | `string`  | Yes      | The slug of the field (must be unique within all fields). |
+| `type`                         | `string`  | Yes      | The type of the field.                                    |
+| `name`                         | `string`  | Yes      | The name of the field.                                    |
+| `description`                  | `string`  | No       | The description of the field.                             |
+| `required`                     | `boolean` | No       | Whether the field is required.                            |
+| `options.default`              | `string`  | No       | The default value (YYYY-MM-DDTHH:MM:SS) of the field.     |
+| `options.validate.min`         | `string`  | No       | The minimum value (YYYY-MM-DDTHH:MM:SS) of the field.     |
+| `options.validate.max`         | `string`  | No       | The maximum value (YYYY-MM-DDTHH:MM:SS) of the field.     |
+| `options.autocomplete.timeout` | `number`  | No       | The timeout for the autocomplete command in seconds.      |
+| `options.autocomplete.command` | `array`   | No       | The command to run for autocompletion.                    |
+
+#### Example
+
+```yaml
+fields:
+  - slug: app_release_datetime
+    name: App Release Datetime
+    type: datetime
+    description: The release datetime of the app
+    required: true
+    options:
+      default: 2022-01-01T00:00:00
+      validate:
+        min: 2021-01-01T00:00:00 | now
+        max: 2023-01-01T00:00:00 | 1 day/week/month/year
+      autocomplete:
+        timeout: 30
+        command:
+          - python
+          - autocomplete.py
+```
+
+### Select
+
+#### Properties
+
+| Prop                           | Type      | Required | Description                                               |
+|--------------------------------|-----------|----------|-----------------------------------------------------------|
+| `slug`                         | `string`  | Yes      | The slug of the field (must be unique within all fields). |
+| `type`                         | `string`  | Yes      | The type of the field.                                    |
+| `name`                         | `string`  | Yes      | The name of the field.                                    |
+| `description`                  | `string`  | No       | The description of the field.                             |
+| `required`                     | `boolean` | No       | Whether the field is required.                            |
+| `options.default`              | `string`  | No       | The default value of the field.                           |
+| `options.values`               | `array`   | No       | The list of options for the field.                        |
+| `options.autocomplete.timeout` | `number`  | No       | The timeout for the autocomplete command in seconds.      |
+| `options.autocomplete.command` | `array`   | No       | The command to run for autocompletion.                    |
+
+`options.values` or `options.values.command` must be provided.
+
+#### Example
+
+With static values:
+
+```yaml
+fields:
+  - slug: app_type
+    name: App Type
+    type: select
+    description: The type of the app
+    required: true
+    options:
+      default: prod
+      values:
+        - test
+        - dev
+        - prod
+```
+
+With dynamic values:
+
+```yaml
+fields:
+  - slug: app_type
+    name: App Type
+    type: select
+    description: The type of the app
+    required: true
+    options:
+      autocomplete:
+        timeout: 30
+        command:
+          - python
+          - autocomplete.py
+```
+
+The autocomplete command should return a list of suggestions in a JSON format:
+
+```json
+["test", "dev", "prod"]
+```
+
+Example with python script:
+
+```python
+import json
+
+if __name__ == '__main__':
+    values = ['test', 'dev', 'prod']
+    print(json.dumps(values))
+```
+
+### Multi Select
+
+#### Properties
+
+| Prop                           | Type      | Required | Description                                               |
+|--------------------------------|-----------|----------|-----------------------------------------------------------|
+| `slug`                         | `string`  | Yes      | The slug of the field (must be unique within all fields). |
+| `type`                         | `string`  | Yes      | The type of the field.                                    |
+| `name`                         | `string`  | Yes      | The name of the field.                                    |
+| `description`                  | `string`  | No       | The description of the field.                             |
+| `required`                     | `boolean` | No       | Whether the field is required.                            |
+| `options.default`              | `array`   | No       | The default values of the field.                          |
+| `options.values`               | `array`   | No       | The list of options for the field.                        |
+| `options.autocomplete.timeout` | `number`  | No       | The timeout for the autocomplete command in seconds.      |
+| `options.autocomplete.command` | `array`   | No       | The command to run for autocompletion.                    |
+
+`options.values` or `options.values.command` must be provided.
+
+#### Example
+
+With static values:
+
+```yaml
+fields:
+  - slug: app_tags
+    name: App Tags
+    type: multi-select
+    description: The tags of the app
+    required: true
+    options:
+      default:
+        - tag1
+        - tag2
+      values:
+        - tag1
+        - tag2
+        - tag3
+```
+
+With dynamic values:
+
+```yaml
+fields:
+  - slug: app_tags
+    name: App Tags
+    type: multi-select
+    description: The tags of the app
+    required: true
+    options:
+      autocomplete:
+        timeout: 30
+        command:
+          - python
+          - autocomplete.py
+```
+
+The autocomplete command should return a list of suggestions in a JSON format:
+
+```json
+[{
+  "value": "tag1",
+  "default": true
+}, {
+  "value": "tag2",
+  "default": false
+}, {
+  "value": "tag3",
+  "default": false
+}]
+```
+
+Example with python script:
+
+```python
+import json
+
+if __name__ == '__main__':
+    values = [{
+        "value": "tag1",
+        "default": True
+    }, {
+        "value": "tag2",
+        "default": False
+    }, {
+        "value": "tag3",
+        "default": False
+    }]
+
+    print(json.dumps(values))
+```
+
+## Features
+
+### Autocomplete Field
+
+The autocomplete feature allows you to provide a list of suggestions to the user when they are filling out a field. This can be useful for fields that have a limited set of options.
+
+Here is a list of important points to note about the autocomplete feature:
+- The command that is run for autocompletion should return a list of suggestions in a JSON array format into the environment variable `TORII_AUTOCOMPLETE_OUTPUT`.
+- The command will get the current value of the field as the first argument. This can be useful for filtering the suggestions based on the current value.
+- The timeout for the autocomplete command is in seconds.
+- If the autocomplete returns one suggestion, it will be automatically filled in the field.
+- If the autocomplete command is not provided, the field will not have autocomplete functionality.
