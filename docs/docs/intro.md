@@ -22,3 +22,45 @@ Torii focus on three principles:
 - **Easily extensible**: Platform Engineers can easily extend Torii by adding new tools and services to the catalog.
 
 That's it!
+
+## Motivation
+
+Today you have the choice between three options to build your Internal Developer Portal:
+
+1. Use [Backstage](https://backstage.io) from Spotify. It's a great solution, but it's hard to extend and customize. You need to be a
+   TypeScript/React expert to extend it.
+2. Use a proprietary SaaS solution like Port, Cortex, OpsLevel, etc. It's a great solution, but it's expensive and you don't have control
+   over the codebase.
+3. Build your own solution from scratch. It's a great solution, but it's hard to maintain and scale. You need to be a full-stack developer
+   to build it.
+
+Torii is a simple, powerful, and extensible open-source Internal Developer Portal that aims to be the best of all worlds. It's easy to
+extend and customize, it's free, and you have control over the codebase.
+
+## FAQ
+
+### What's the difference between Torii and Qovery?
+
+The Qovery and Torii projects are two different projects with different goals:
+
+- [Qovery](https://www.qovery.com) is an Internal Developer **Platform** focusing on the Software Development Lifecycle (build, deploy,
+  run).
+- Torii is an Internal Developer **Portal** focusing on unifying the experience of all engineering tools.
+
+Here is a features table to help you understand the difference:
+
+| Feature               | Qovery (Internal Developer Platform) | Torii (Internal Developer Portal) |
+|-----------------------|--------------------------------------|-----------------------------------|
+| Build                 | ✅                                    | ❌                                 |
+| Deploy                | ✅                                    | ❌                                 |
+| Run                   | ✅                                    | ❌                                 |
+| Ephemeral Environment | ✅                                    | ❌                                 |
+| Self-Service          | ✅                                    | ✅                                 |
+| Catalogs Service      | ❌                                    | ✅                                 |
+| Scorecard Service     | ❌                                    | ✅                                 |
+| Workflow Service      | Partial with the concept of Pipeline | ✅                                 |
+
+### Why Torii?
+
+Torii is a [Japanese gate](https://en.wikipedia.org/wiki/Torii) most commonly found at the entrance of or within a Shinto shrine, where it
+symbolically marks the transition from the mundane to the sacred.
