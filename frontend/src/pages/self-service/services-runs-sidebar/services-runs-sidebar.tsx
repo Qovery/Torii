@@ -1,20 +1,35 @@
-import clsx from "clsx";
-import { useAtom, useAtomValue } from "jotai";
-import { runsSidebarExpandedAtom } from "../atoms";
-import { runsAtom } from "./atoms";
-import { Link } from "react-router-dom";
+import { Badge } from "@/components/Badge";
+import { RunStatus } from "@/enums/run-status.enum";
+import { ThemeColors } from "@/enums/theme-colors.enum";
 import {
   ChevronRightIcon,
   ClockIcon,
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
+import clsx from "clsx";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { Badge } from "@/components/Badge";
-import { ThemeColors } from "@/enums/theme-colors.enum";
-import { useCallback } from "react";
+import { useAtom, useAtomValue } from "jotai";
+import { Link } from "react-router-dom";
+import { runsSidebarExpandedAtom } from "../atoms";
+import { runsAtom } from "./atoms";
 
 dayjs.extend(relativeTime);
+
+const getStatusColor = (status: RunStatus, asClass?: boolean) => {
+  switch (status) {
+    case RunStatus.QUEUED:
+      return asClass ? "bg-orange-500" : ThemeColors.WARNING;
+    case RunStatus.RUNNING:
+      return asClass ? "bg-cyan-400" : ThemeColors.PRIMARY;
+    case RunStatus.FAILURE:
+      return asClass ? "bg-rose-400" : ThemeColors.DANGER;
+    case RunStatus.SUCCESS:
+      return asClass ? "bg-green-400" : ThemeColors.SUCCESS;
+    default:
+      return asClass ? "bg-gray-400" : ThemeColors.PRIMARY;
+  }
+};
 
 export default function ServicesRunsSidebar() {
   const [{ data }] = useAtom(runsAtom);
@@ -22,13 +37,11 @@ export default function ServicesRunsSidebar() {
     runsSidebarExpandedAtom,
   );
 
-  console.log(runsSidebarExpanded);
-
   return (
     <div
       className={clsx(
-        "relative box-content flex h-[calc(100vh-65px)] w-[60px] min-w-[60px] cursor-pointer flex-col overflow-hidden border-l border-gray-200 bg-white duration-500",
-        runsSidebarExpanded && "w-[300px]",
+        "relative box-content flex min-h-[calc(100vh-65px)] w-[60px] min-w-[60px] cursor-pointer flex-col overflow-hidden border-l border-gray-200 bg-white duration-500",
+        runsSidebarExpanded && "!min-w-[300px]",
       )}
       onClick={() => setRunsSidebarExpanded(!runsSidebarExpanded)}
     >
@@ -44,7 +57,7 @@ export default function ServicesRunsSidebar() {
           <p className="whitespace-nowrap text-sm">My in progress runs</p>
         </div>
       </div>
-      <div className="flex size-full flex-col overflow-y-auto overflow-x-hidden">
+      <div className="pretty-scrollbar flex size-full flex-col overflow-y-auto overflow-x-hidden">
         {data?.map((run) => (
           <RunItem
             key={run.id}
@@ -63,7 +76,7 @@ interface RunItemProps {
   actionSlug: string;
   inputName: string;
   updatedAt: string;
-  status: string;
+  status: RunStatus;
 }
 
 const RunItem = ({
@@ -73,19 +86,6 @@ const RunItem = ({
   status,
 }: RunItemProps) => {
   const runsSidebarExpanded = useAtomValue(runsSidebarExpandedAtom);
-
-  const getStatusColor = useCallback((status: string, asClass?: boolean) => {
-    switch (status) {
-      case "RUNNING":
-        return asClass ? "bg-primary-400" : ThemeColors.PRIMARY;
-      case "FAILURE":
-        return asClass ? "bg-red-400" : ThemeColors.DANGER;
-      case "SUCCESS":
-        return asClass ? "bg-green-400" : ThemeColors.SUCCESS;
-      default:
-        return asClass ? "bg-primary-400" : ThemeColors.PRIMARY;
-    }
-  }, []);
 
   return (
     <div

@@ -27,14 +27,17 @@ export const catalogsSwrAtom = atomWithSwr(catalogsAtom);
 export const textSearchAtom = atom<string>("");
 
 export const filteredCatalogsAtom = atom<Catalog[]>(async (get) => {
-  const catalogs: Catalog[] = await get(catalogsSwrAtom)?.data;
+  const catalogs: Catalog[] = (await get(catalogsSwrAtom)).data;
+  const filteredEmptyCatalogs = catalogs.filter(
+    (catalog) => catalog.actions.length > 0,
+  );
   const textSearch = get(textSearchAtom);
 
   if (!textSearch) {
-    return catalogs;
+    return filteredEmptyCatalogs;
   }
 
-  return catalogs.map((catalog) => {
+  return filteredEmptyCatalogs.map((catalog) => {
     const services = catalog.actions.filter((action) =>
       action.name.toLowerCase().includes(textSearch.toLowerCase()),
     );

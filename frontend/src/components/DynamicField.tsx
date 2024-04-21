@@ -25,3 +25,5 @@ export function DynamicField({ field, initialFocus }: DynamicFieldProps) {
 
   return <p>'{field.type}' is not a supported field</p>;
 }
+
+export default DynamicField;

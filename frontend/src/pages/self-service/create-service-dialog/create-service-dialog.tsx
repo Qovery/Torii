@@ -5,7 +5,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useForm } from "react-hook-form";
 import Dialog from "@/components/Dialog";
-import DyanmicFields from "@/components/DynamicFields";
+import DynamicFields from "@/components/DynamicFields";
 import { Form } from "@/components/Form";
 import { FormButtons } from "@/components/FormButtons";
 import { useRef } from "react";
@@ -63,10 +63,12 @@ export function CreateServiceDialog() {
       customFooter
     >
       <Form formRef={form} onSubmit={handleSubmit}>
-        <DyanmicFields
-          fields={selectedService?.fields as Field[]}
-          initialFocus={initialFocus}
-        />
+        <div className="max-h-[80vh] overflow-y-auto">
+          <DynamicFields
+            fields={selectedService?.fields as Field[]}
+            initialFocus={initialFocus}
+          />
+        </div>
         <FormButtons
           valid={form.formState.isValid}
           onCancel={() => setCreateDialogOpened(false)}

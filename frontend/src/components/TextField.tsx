@@ -4,9 +4,10 @@ import { Input } from "./Input";
 
 export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   field: Field;
+  focused?: boolean;
 }
 
-const TextField = ({ field, ...props }: TextFieldProps) => {
+const TextField = ({ field, focused, ...props }: TextFieldProps) => {
   return (
     <div className="space-y-2 sm:grid sm:grid-cols-3 sm:gap-4 sm:space-y-2 sm:py-5">
       <div>
@@ -32,6 +33,7 @@ const TextField = ({ field, ...props }: TextFieldProps) => {
           aria-describedby="field-required"
           type={props.type}
           inputMode={props.inputMode}
+          focused={focused}
         />
       </div>
     </div>

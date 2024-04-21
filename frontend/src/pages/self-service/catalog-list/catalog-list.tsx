@@ -5,7 +5,7 @@ import { DialogIds } from "@/enums/dialog-ids.enum";
 import { dialogOpenedAtomFamily } from "@/pages/atoms";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import * as yup from "yup";
 import { CreateServiceDialog } from "../create-service-dialog/create-service-dialog";
@@ -16,8 +16,22 @@ import {
   textSearchAtom,
 } from "./atoms";
 import ServiceCard from "./service-card";
+import Subheader from "@/components/Subheader";
 
-export default function CatalogList() {
+export const CatalogList = () => {
+  return (
+    <>
+      <div className="mb-6">
+        <Subheader pageTitle="Self Service" />
+      </div>
+      <Suspense fallback={<div>Loading...</div>}>
+        <List />
+      </Suspense>
+    </>
+  );
+};
+
+const List = () => {
   const catalogs = useAtomValue(filteredCatalogsAtom);
   const setSelectedCatalogSlug = useSetAtom(selectedCatalogSlugAtom);
   const setSelectedServiceSlug = useSetAtom(selectedServiceSlugAtom);
@@ -30,8 +44,8 @@ export default function CatalogList() {
     return (
       <div className="my-5">
         <EmptyState
-          text="No Services"
-          subText="This catalog has no services."
+          text="Empty catalog"
+          subText="There is no item in this catalog."
         />
       </div>
     );
@@ -45,7 +59,7 @@ export default function CatalogList() {
 
   return (
     <div className="flex flex-col">
-      <CatalogsSearch />
+      <Search />
       <ul role="list" className="space-y-6">
         {catalogs.map((catalog) => (
           <li key={catalog.slug}>
@@ -72,9 +86,9 @@ export default function CatalogList() {
       {createDialogOpened && <CreateServiceDialog />}
     </div>
   );
-}
+};
 
-const CatalogsSearch = () => {
+const Search = () => {
   const setTextSearch = useSetAtom(textSearchAtom);
 
   const schema = yup.object({
@@ -103,3 +117,5 @@ const CatalogsSearch = () => {
     </div>
   );
 };
+
+export default CatalogList;

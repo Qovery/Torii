@@ -3,18 +3,31 @@ import ReactDOM from "react-dom/client";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import "./main.css";
 
-import SelfServiceWithTitle from "./pages/self-service/self-service";
+import SelfService from "./pages/self-service/self-service";
 import { Providers } from "./providers";
 import App from "./pages/app";
+import { RunHistory } from "./pages/self-service/run-history/run-history";
+import CatalogList from "./pages/self-service/catalog-list/catalog-list";
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
+    errorElement: <div>Oops! There was an error.</div>,
     children: [
       {
         path: "/self-service",
-        element: <SelfServiceWithTitle />,
+        element: <SelfService />,
+        children: [
+          {
+            element: <CatalogList />,
+            index: true,
+          },
+          {
+            path: "/self-service/run-history",
+            element: <RunHistory />,
+          },
+        ],
       },
     ],
   },

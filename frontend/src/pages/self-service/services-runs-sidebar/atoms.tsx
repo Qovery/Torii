@@ -2,6 +2,7 @@ import { API_URL } from "@/config";
 import { makeQueryAtoms } from "@/lib/make-query-atoms";
 import { selectedCatalogSlugAtom } from "../catalog-list/atoms";
 import { SELF_SERVICE } from "../atoms";
+import { atomWithSwr } from "@/lib/atom-with-swr";
 
 export const [runsAtom, runsStatusAtom] = makeQueryAtoms<string, any[]>(
   `catalogs-runs`,
@@ -12,6 +13,8 @@ export const [runsAtom, runsStatusAtom] = makeQueryAtoms<string, any[]>(
       .then((data) => data.results);
   },
 );
+
+export const runsSwrAtom = atomWithSwr(runsAtom);
 
 export const [catalogRunsAtom, catalogRunsStatusAtom] = makeQueryAtoms<
   string,

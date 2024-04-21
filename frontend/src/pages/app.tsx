@@ -10,7 +10,7 @@ export default function AppShell() {
   ];
 
   return (
-    <div className="min-h-full">
+    <div className="scrollbar-hide min-h-full">
       <Header routes={routes} userMenu={routes} />
       <main>
         <Outlet />
