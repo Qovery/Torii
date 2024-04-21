@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+defaults:
+  run:
+    working-directory: ./website
+
 jobs:
   build:
     name: Build Docusaurus
@@ -13,23 +17,22 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: npm
+      #          cache: npm
 
       - name: Install dependencies
-        working-directory: ./website
         run: npm ci
 
       - name: Build website
-        working-directory: ./website
         run: npm run build
 
       - name: Upload Build Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./website/build
+          path: build
 
   deploy:
     name: Deploy Doc to GitHub Pages
