@@ -14,6 +14,7 @@ Torii focus on three principles:
 That's it!
 
 > ⚠️ Torii is in active development and not ready for production yet.
+> But contributions are appreciated.
 
 ## Features
 
@@ -341,11 +342,23 @@ Today you have the choice between three options to build your Internal Developer
 2. Use a proprietary SaaS solution like Port, Cortex, OpsLevel, etc. It's a great solution, but it's expensive and you don't have control
    over the codebase.
 3. Build your own solution from scratch. It's a great solution, but it's hard to maintain and scale. You need to be a full-stack developer
-   to
-   build it.
+   to build it.
 
 Torii is a simple, powerful, and extensible open-source Internal Developer Portal that aims to be the best of all worlds. It's easy to
 extend and customize, it's free, and you have control over the codebase.
+
+--- 
+
+Curious to understand in more detail the motivation behind Torii? Read these articles:
+
+- [Why Backstage is So Complex? Is There An Alternative?](https://romaricphilogene.substack.com/p/platform-tips-20-why-backstage-is)
+- [What Could Be A Better Alternative To Backstage?](https://romaricphilogene.substack.com/p/platform-tips-21-what-could-be-a)
+
+Curious to understand Torii is built? Read these articles:
+
+- [Building a Better Alternative To Backstage - Part I](https://romaricphilogene.substack.com/p/platform-tips-22-building-a-better)
+- Building a Better Alternative To Backstage - Part II (coming soon)
+- Building a Better Alternative To Backstage - Part III (coming soon)
 
 ## FAQ
 

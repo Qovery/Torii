@@ -37,6 +37,21 @@ Today you have the choice between three options to build your Internal Developer
 Torii is a simple, powerful, and extensible open-source Internal Developer Portal that aims to be the best of all worlds. It's easy to
 extend and customize, it's free, and you have control over the codebase.
 
+--- 
+
+Curious to understand in more detail the motivation behind Torii? Read these articles:
+
+- [Why Backstage is So Complex? Is There An Alternative?](https://romaricphilogene.substack.com/p/platform-tips-20-why-backstage-is)
+- [What Could Be A Better Alternative To Backstage?](https://romaricphilogene.substack.com/p/platform-tips-21-what-could-be-a)
+
+Curious to understand Torii is built? Read these articles:
+
+- [Building a Better Alternative To Backstage - Part I](https://romaricphilogene.substack.com/p/platform-tips-22-building-a-better)
+- Building a Better Alternative To Backstage - Part II (coming soon)
+- Building a Better Alternative To Backstage - Part III (coming soon)
+
+Refer to the [Design section](design.mdx) to understand the current architecture and design of Torii.
+
 ## FAQ
 
 ### What's the difference between Torii and Qovery?
