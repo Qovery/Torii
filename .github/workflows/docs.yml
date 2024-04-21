@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    # Review gh actions docs if you want to further define triggers, paths, etc
-    # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#on
 
 jobs:
   build:
@@ -21,10 +19,10 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: cd docs && npm ci
+        run: npm ci
 
       - name: Build website
-        run: cd docs && npm run build
+        run: npm run build
 
       - name: Upload Build Artifact
         uses: actions/upload-pages-artifact@v3
