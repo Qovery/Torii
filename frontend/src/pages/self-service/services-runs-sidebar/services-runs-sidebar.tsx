@@ -47,6 +47,7 @@ export default function ServicesRunsSidebar() {
       <div className="flex size-full flex-col overflow-y-auto overflow-x-hidden">
         {data?.map((run) => (
           <RunItem
+            key={run.id}
             actionSlug={run.action_slug}
             inputName={run.input_payload.name}
             updatedAt={run.updated_at}

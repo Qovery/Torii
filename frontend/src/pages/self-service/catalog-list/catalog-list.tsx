@@ -1,17 +1,24 @@
 import EmptyState from "@/components/EmptyState";
-import { useAtom, useSetAtom } from "jotai";
-import { CreateServiceDialog } from "../create-service-dialog/create-service-dialog";
+import { Form } from "@/components/Form";
+import { Input } from "@/components/Input";
 import { DialogIds } from "@/enums/dialog-ids.enum";
 import { dialogOpenedAtomFamily } from "@/pages/atoms";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useEffect } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import * as yup from "yup";
+import { CreateServiceDialog } from "../create-service-dialog/create-service-dialog";
 import {
-  catalogsAtom,
+  filteredCatalogsAtom,
   selectedCatalogSlugAtom,
   selectedServiceSlugAtom,
+  textSearchAtom,
 } from "./atoms";
 import ServiceCard from "./service-card";
 
 export default function CatalogList() {
-  const [{ data }] = useAtom(catalogsAtom);
+  const catalogs = useAtomValue(filteredCatalogsAtom);
   const setSelectedCatalogSlug = useSetAtom(selectedCatalogSlugAtom);
   const setSelectedServiceSlug = useSetAtom(selectedServiceSlugAtom);
 
@@ -19,7 +26,7 @@ export default function CatalogList() {
     dialogOpenedAtomFamily(DialogIds.CreateService),
   );
 
-  if (data.length === 0) {
+  if (catalogs.length === 0) {
     return (
       <div className="my-5">
         <EmptyState
@@ -37,9 +44,10 @@ export default function CatalogList() {
   };
 
   return (
-    <>
+    <div className="flex flex-col">
+      <CatalogsSearch />
       <ul role="list" className="space-y-6">
-        {data.map((catalog) => (
+        {catalogs.map((catalog) => (
           <li key={catalog.slug}>
             <h2 className="mb-4 text-xl font-bold">{catalog.name}</h2>
             <ul
@@ -62,6 +70,36 @@ export default function CatalogList() {
         ))}
       </ul>
       {createDialogOpened && <CreateServiceDialog />}
-    </>
+    </div>
   );
 }
+
+const CatalogsSearch = () => {
+  const setTextSearch = useSetAtom(textSearchAtom);
+
+  const schema = yup.object({
+    search: yup.string().required(),
+  });
+
+  const form = useForm({
+    resolver: yupResolver(schema),
+    mode: "onChange",
+  });
+
+  const search = useWatch({
+    control: form.control,
+    name: "search",
+  });
+
+  useEffect(() => {
+    setTextSearch(search);
+  }, [setTextSearch, search]);
+
+  return (
+    <div className="flex">
+      <Form formRef={form}>
+        <Input id="search" name="search" placeholder="Search" />
+      </Form>
+    </div>
+  );
+};

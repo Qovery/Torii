@@ -1,10 +1,5 @@
 import { Field } from "@/types/catalog.type";
-import {
-  TextareaHTMLAttributes,
-  useEffect,
-  forwardRef,
-  ForwardedRef,
-} from "react";
+import { TextareaHTMLAttributes, useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 
 interface TextareaFieldProps

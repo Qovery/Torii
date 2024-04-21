@@ -41,8 +41,6 @@ export function CreateServiceDialog() {
     mode: "onChange",
   });
 
-  form.watch((e) => console.log(e));
-
   const {
     mutateAsync: executeService,
     status,

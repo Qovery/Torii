@@ -23,3 +23,25 @@ export const [catalogsAtom, catalogsStatusAtom] = makeQueryAtoms<
 );
 
 export const catalogsSwrAtom = atomWithSwr(catalogsAtom);
+
+export const textSearchAtom = atom<string>("");
+
+export const filteredCatalogsAtom = atom<Catalog[]>(async (get) => {
+  const catalogs: Catalog[] = await get(catalogsSwrAtom)?.data;
+  const textSearch = get(textSearchAtom);
+
+  if (!textSearch) {
+    return catalogs;
+  }
+
+  return catalogs.map((catalog) => {
+    const services = catalog.actions.filter((action) =>
+      action.name.toLowerCase().includes(textSearch.toLowerCase()),
+    );
+
+    return {
+      ...catalog,
+      actions: services,
+    };
+  });
+});
