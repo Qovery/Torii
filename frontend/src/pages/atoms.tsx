@@ -2,7 +2,6 @@ import { atom } from "jotai";
 import { atomFamily } from "jotai/utils";
 import { User } from "@/types/user.type";
 
-export const pageTitleAtom = atom("");
 export const dialogOpenedAtomFamily = atomFamily(() => atom(false));
 
 const user = {

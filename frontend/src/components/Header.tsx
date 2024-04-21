@@ -18,7 +18,10 @@ export function Header({ routes, userMenu }: HeaderProps) {
   const user = useAtomValue(userAtom);
 
   return (
-    <Disclosure as="nav" className="bg-white shadow-sm">
+    <Disclosure
+      as="nav"
+      className="border-b border-gray-200 bg-white shadow-sm"
+    >
       {({ open }) => (
         <>
           <div className="px-4 sm:px-6 lg:px-8">

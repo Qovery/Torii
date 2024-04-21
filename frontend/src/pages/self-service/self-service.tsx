@@ -1,20 +1,25 @@
-import { withPageTitle } from "@/hoc/with-page-title";
 import { Provider } from "jotai";
 import { Suspense } from "react";
 import CatalogList from "./catalog-list/catalog-list";
 import ServicesRunsSidebar from "./services-runs-sidebar/services-runs-sidebar";
+import Subheader from "@/components/Subheader";
 
 export function SelfService() {
   return (
     <Provider>
       <Suspense fallback={<div>Loading...</div>}>
-        <CatalogList />
-        <ServicesRunsSidebar />
+        <div className="flex">
+          <div className="relative flex size-full max-w-full flex-col overflow-y-auto px-4 py-10 sm:px-6 lg:px-8">
+            <div className="mb-6">
+              <Subheader pageTitle={"Self Service"} />
+            </div>
+            <CatalogList />
+          </div>
+          <ServicesRunsSidebar />
+        </div>
       </Suspense>
     </Provider>
   );
 }
 
-const SelfServiceWithTitle = withPageTitle(SelfService, "Self Service");
-
-export default SelfServiceWithTitle;
+export default SelfService;

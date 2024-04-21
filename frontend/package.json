@@ -20,6 +20,7 @@
     "@tanstack/react-query-devtools": "^5.29.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
+    "dayjs": "^1.11.10",
     "jotai-devtools": "^0.8.0",
     "jotai-tanstack-query": "^0.8.5",
     "localforage": "^1.10.0",

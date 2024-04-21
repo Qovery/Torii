@@ -5,7 +5,7 @@ import "./main.css";
 
 import SelfServiceWithTitle from "./pages/self-service/self-service";
 import { Providers } from "./providers";
-import App from "./pages/App";
+import App from "./pages/app";
 
 const router = createBrowserRouter([
   {

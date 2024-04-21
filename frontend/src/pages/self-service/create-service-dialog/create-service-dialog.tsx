@@ -11,6 +11,7 @@ import { FormButtons } from "@/components/FormButtons";
 import { useRef } from "react";
 import { executeServiceMutation, selectedServiceAtom } from "./atoms";
 import { dialogOpenedAtomFamily } from "@/pages/atoms";
+import { queryClientAtom } from "jotai-tanstack-query";
 
 export type ExecuteServicePayload = {
   name: string;
@@ -24,6 +25,7 @@ export function CreateServiceDialog() {
   const setCreateDialogOpened = useSetAtom(
     dialogOpenedAtomFamily(DialogIds.CreateService),
   );
+  const queryClient = useAtomValue(queryClientAtom);
 
   const initialFocus = {
     name: "name",
@@ -39,6 +41,8 @@ export function CreateServiceDialog() {
     mode: "onChange",
   });
 
+  form.watch((e) => console.log(e));
+
   const {
     mutateAsync: executeService,
     status,
@@ -47,6 +51,9 @@ export function CreateServiceDialog() {
 
   const handleSubmit = async (payload: ExecuteServicePayload) => {
     await executeService(payload);
+    queryClient.invalidateQueries({
+      queryKey: ["catalogs-runs"],
+    });
     setCreateDialogOpened(false);
   };
 
