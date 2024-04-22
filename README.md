@@ -372,15 +372,15 @@ The Qovery and Torii projects are two different projects with different goals:
 Here is a features table to help you understand the difference:
 
 | Feature               | Qovery (Internal Developer Platform) | Torii (Internal Developer Portal) |
-|-----------------------|--------------------------------------|-----------------------------------|
-| Build                 | ✅                                    | ❌                                 |
-| Deploy                | ✅                                    | ❌                                 |
-| Run                   | ✅                                    | ❌                                 |
-| Ephemeral Environment | ✅                                    | ❌                                 |
-| Self-Service          | ✅                                    | ✅                                 |
-| Catalogs Service      | ❌                                    | ✅                                 |
-| Scorecard Service     | ❌                                    | ✅                                 |
-| Workflow Service      | Partial with the concept of Pipeline | ✅                                 |
+| --------------------- | ------------------------------------ | --------------------------------- |
+| Build                 | ✅                                   | ❌                                |
+| Deploy                | ✅                                   | ❌                                |
+| Run                   | ✅                                   | ❌                                |
+| Ephemeral Environment | ✅                                   | ❌                                |
+| Self-Service          | ✅                                   | ✅                                |
+| Catalogs Service      | ❌                                   | ✅                                |
+| Scorecard Service     | ❌                                   | ✅                                |
+| Workflow Service      | Partial with the concept of Pipeline | ✅                                |
 
 ### Why Torii?
 

@@ -1,9 +1,9 @@
-import { userAtom } from "@/atoms/user.atoms";
 import { Disclosure } from "@headlessui/react";
 import clsx from "clsx";
 import { useAtomValue } from "jotai";
 import { BellIcon } from "lucide-react";
 import NavigationItem, { RouteItem } from "./NavigationItem";
+import { userAtom } from "@/pages/atoms";
 
 export interface NavProps {
   routes: RouteItem[];
@@ -14,6 +14,7 @@ export interface MobileNavProps extends NavProps {
 }
 
 export function MobileNav({ routes, userMenu }: MobileNavProps) {
+  /** @TODO This shoud be deleted and place at top level when the back end supports users */
   const user = useAtomValue(userAtom);
 
   return (

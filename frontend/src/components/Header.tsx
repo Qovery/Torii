@@ -1,4 +1,3 @@
-import { userAtom } from "@/atoms/user.atoms";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
@@ -7,6 +6,7 @@ import { BellIcon } from "lucide-react";
 import { Fragment } from "react";
 import { MobileNav, Nav } from "./Nav";
 import { RouteItem } from "./NavigationItem";
+import { userAtom } from "@/pages/atoms";
 
 export interface HeaderProps {
   routes: RouteItem[];
@@ -14,10 +14,14 @@ export interface HeaderProps {
 }
 
 export function Header({ routes, userMenu }: HeaderProps) {
+  /** @TODO This shoud be deleted and place at top level when the back end supports users */
   const user = useAtomValue(userAtom);
 
   return (
-    <Disclosure as="nav" className="bg-white shadow-sm">
+    <Disclosure
+      as="nav"
+      className="border-b border-gray-200 bg-white shadow-sm"
+    >
       {({ open }) => (
         <>
           <div className="px-4 sm:px-6 lg:px-8">

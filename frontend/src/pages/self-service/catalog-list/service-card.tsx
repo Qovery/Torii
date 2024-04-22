@@ -8,21 +8,19 @@ import {
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { Fragment, useCallback } from "react";
-import { Button } from "../common/Button";
+import { Button } from "@/components/Button";
 
-export interface SelfServiceCardProps {
+export interface ServiceCardProps {
   service: Service;
   onCreateClicked: (slug: string) => void;
-  onEditClicked: (slug: string) => void;
   onViewRunsClicked: (slug: string) => void;
 }
 
-export default function SelfServiceCard({
+export default function ServiceCard({
   service,
   onCreateClicked,
-  onEditClicked,
   onViewRunsClicked,
-}: SelfServiceCardProps) {
+}: ServiceCardProps) {
   const getIcon = useCallback((icon: string) => {
     switch (icon?.toLowerCase()) {
       case "target":
@@ -68,19 +66,6 @@ export default function SelfServiceCard({
                     onClick={() => onViewRunsClicked(service.slug)}
                   >
                     View<span className="sr-only">, {service.name}</span>
-                  </div>
-                )}
-              </Menu.Item>
-              <Menu.Item>
-                {({ active }) => (
-                  <div
-                    className={clsx(
-                      active ? "bg-gray-50" : "",
-                      "block px-3 py-1 text-sm leading-6 text-gray-900",
-                    )}
-                    onClick={() => onEditClicked(service.slug)}
-                  >
-                    Edit<span className="sr-only">, {service.name}</span>
                   </div>
                 )}
               </Menu.Item>

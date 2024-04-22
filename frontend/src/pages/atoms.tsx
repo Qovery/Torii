@@ -1,11 +1,8 @@
 import { atom } from "jotai";
+import { atomFamily } from "jotai/utils";
+import { User } from "@/types/user.type";
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  imageUrl: string;
-}
+export const dialogOpenedAtomFamily = atomFamily(() => atom(false));
 
 const user = {
   id: "1",

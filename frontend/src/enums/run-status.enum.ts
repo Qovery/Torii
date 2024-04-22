@@ -1,0 +1,7 @@
+export enum RunStatus {
+  QUEUED = "QUEUED",
+  RUNNING = "RUNNING",
+  SUCCESS = "SUCCESS",
+  FAILURE = "FAILURE",
+  UNKNOWN = "UNKNOWN",
+}
