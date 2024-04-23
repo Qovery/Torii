@@ -28,7 +28,7 @@ function HomepageHeader() {
 }
 
 export default function Home() {
-  return <Redirect to='/docs/intro'/>;
+  return <Redirect to='/Torii/docs/intro'/>;
 }
 
 // export default function Home(): JSX.Element {
