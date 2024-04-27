@@ -3,11 +3,12 @@ use std::sync::Arc;
 use axum::{debug_handler, Extension, Json};
 use axum::extract::Path;
 use axum::http::StatusCode;
+use chrono::{NaiveDateTime, Utc};
 use tokio::sync::mpsc::Sender;
 use tracing::error;
 
 use crate::database;
-use crate::database::{insert_self_service_run, SelfServiceRunJson, Status};
+use crate::database::{insert_self_service_run, SelfServiceRunJson, SelfServiceRunLogJson, Status};
 use crate::self_service::{check_json_payload_against_yaml_config_fields, execute_command, ExecValidateScriptRequest, find_self_service_section_by_slug, get_self_service_section_and_action, JobResponse, ResultsResponse};
 use crate::self_service::services::BackgroundWorkerTask;
 use crate::yaml_config::{SelfServiceSectionActionYamlConfig, SelfServiceSectionYamlConfig, YamlConfig};
@@ -80,6 +81,30 @@ pub async fn list_self_service_section_runs(
             (StatusCode::INTERNAL_SERVER_ERROR, Json(ResultsResponse { message: Some(err.to_string()), results: vec![] }))
         }
     }
+}
+
+#[debug_handler]
+pub async fn list_self_service_section_run_logs(
+    Extension(pg_pool): Extension<Arc<sqlx::PgPool>>,
+    Path(logs_slug): Path<String>,
+) -> (StatusCode, Json<ResultsResponse<SelfServiceRunLogJson>>) {
+
+    // mock data for now
+    let mut data = vec![];
+
+    for i in 1..1000 {
+        data.push(SelfServiceRunLogJson {
+            id: i.to_string(),
+            created_at: "2021-08-01T00:00:00Z".to_string(),
+            is_stderr: i % 2 == 0,
+            message: if i % 2 == 0 { format!("this is an error message {}", i) } else { format!("this is a log message {}", i) },
+        });
+    }
+
+    (StatusCode::OK, Json(ResultsResponse {
+        message: None,
+        results: data,
+    }))
 }
 
 #[debug_handler]

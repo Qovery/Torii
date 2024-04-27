@@ -93,6 +93,14 @@ pub struct SelfServiceRunJson {
     pub tasks: serde_json::Value,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SelfServiceRunLogJson {
+    pub id: String,
+    pub created_at: String,
+    pub is_stderr: bool,
+    pub message: String,
+}
+
 /// Initialize the database by creating the tables
 pub async fn init_database(pg_pool: &Pool<Postgres>) -> Result<(), QError> {
     // execute SQL schema

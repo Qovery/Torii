@@ -109,7 +109,7 @@ async fn execute_command<T>(
 
     if external_command.get_command().len() == 1 {
         return Err(format!("Validate script '{}' is invalid. \
-                Be explicit on the command to execute, e.g. 'python3 examples/validation_script.py'",
+                Be explicit on the command to execute, e.g. 'python examples/validation_script.py'",
                            external_command.get_command()[0]));
     }
 
@@ -129,6 +129,8 @@ async fn execute_command<T>(
         Err(err) => return Err(format!("Validate script '{}' failed: {}", &cmd_one_line, err))
     };
 
+    // get stdout and stderr from child and forward it in real time to the upper function
+
     let exit_status = match timeout(Duration::from_secs(external_command.get_timeout()), child.wait()).await {
         Ok(exit_status) => exit_status,
         Err(_) => return Err(match child.kill().await {
@@ -147,8 +149,6 @@ async fn execute_command<T>(
     if !exit_status.success() {
         return Err(format!("Validate script '{}' failed: {:?}", &cmd_one_line, exit_status));
     }
-
-    // TODO parse output.stdout and output.stderr and forward to the frontend
 
     Ok(consume_job_output_result_from_json_output_env(cmd_one_line.as_str(), start.elapsed().as_millis()))
 }
